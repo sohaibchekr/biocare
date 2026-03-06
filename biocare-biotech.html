@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIOCARE-BIOTECH - Gestion des Alertes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .microbe-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.05;
+            background-image: 
+                radial-gradient(circle at 20% 50%, #06b6d4 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, #8b5cf6 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, #ec4899 0%, transparent 50%);
+        }
+        .slide-in-right {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .creator-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .sync-online {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .sync-offline {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196f3">
+</head>
+<body class="text-gray-100">
+
+    <div class="microbe-bg"></div>
+    
+    <!-- Sync Status Indicator -->
+    <div id="sync-status" class="sync-status sync-online hidden">
+        <i class="fas fa-cloud mr-2"></i><span id="sync-text">Synchronisé</span>
+    </div>
+
+    <!-- Notification Center -->
+    <div id="notification-center" class="fixed top-20 right-4 w-80 max-h-96 overflow-y-auto glass-card rounded-2xl p-4 hidden z-50 shadow-2xl border border-white/20">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+            <h3 class="font-bold flex items-center gap-2">
+                <i class="fas fa-bell text-cyan-400"></i>
+                Notifications
+                <span id="notif-count" class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+            </h3>
+            <button onclick="clearAllNotifications()" class="text-xs text-gray-400 hover:text-white">
+                Tout effacer
+            </button>
+        </div>
+        <div id="notifications-list" class="space-y-3"></div>
+    </div>
+
+    <!-- OWNER PASSWORD MODAL -->
+    <div id="owner-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 modal-overlay" onclick="closeOwnerModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 rounded-2xl w-full max-w-md border-2 border-amber-500/50 shadow-2xl animate-fade-in">
+                <div class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                            <i class="fas fa-crown text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-amber-400">Accès Propriétaire</h2>
+                            <p class="text-xs text-gray-400">BIOCARE-BIOTECH - SOHAIB CHEKRI</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <p class="text-sm text-gray-400 text-center">
+                        Cette zone est réservée au propriétaire du ce logiciel.
+                        Veuillez entrer le mot de passe propriétaire pour continuer.
+                    </p>
+
+                    <div>
+                        <label class="block text-sm font-medium text-amber-400 mb-2">
+                            <i class="fas fa-shield-alt mr-2"></i>Mot de passe propriétaire
+                        </label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-4 top-3.5 text-amber-400"></i>
+                            <input 
+                                type="password" 
+                                id="owner-password-input"
+                                class="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl pl-11 pr-12 py-3 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-white"
+                                placeholder="Entrez le mot de passe..."
+                                onkeypress="if(event.key==='Enter')verifyOwnerPassword()"
+                            >
+                            <button 
+                                onclick="toggleOwnerPasswordVisibility()"
+                                class="absolute right-4 top-3.5 text-gray-400 hover:text-white"
+                            >
+                                <i class="fas fa-eye" id="owner-password-eye"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Contactez SOHAIB CHEKRI si vous avez oublié le mot de passe.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button 
+                            onclick="closeOwnerModal()" 
+                            class="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-3 font-medium transition-all"
+                        >
+                            Annuler
+                        </button>
+                        <button 
+                            onclick="verifyOwnerPassword()"
+                            class="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl py-3 font-medium transition-all shadow-lg shadow-amber-500/25"
+                        >
+                            <i class="fas fa-unlock mr-2"></i>Accéder
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN PAGE -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl p-8 w-full max-w-md animate-fade-in">
+            <div class="text-center mb-6">
+                <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
+                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/30">
+                    <i class="fas fa-bacteria text-3xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold mb-2 leading-tight">
+                    <span class="gradient-text">BIOCARE-BIOTECH</span>
+                </h1>
+                <p class="text-gray-400 text-sm">Laboratoire de Microbiologie</p>
+            </div>
+
+            <div id="login-form-container">
+                <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email professionnel</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="email" name="email" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                                placeholder="prenom.nom@biocare-biotech.com">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="password" name="password" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white rounded-xl py-3.5 font-semibold transition-all shadow-lg shadow-cyan-500/25 mt-6">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center space-y-2">
+                    <p class="text-sm text-gray-400">Première visite ?</p>
+                    <button onclick="showRegister()" class="text-cyan-400 hover:text-cyan-300 font-medium text-sm block w-full">
+                        Créer un compte
+                    </button>
+                    <p class="text-xs text-gray-500">ou demandez à SOHAIB CHEKRI de vous inviter</p>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <button onclick="openOwnerModal()" class="text-xs text-gray-500 hover:text-amber-400 transition-colors w-full flex items-center justify-center gap-2">
+                        <i class="fas fa-crown text-amber-400"></i>
+                        Connexion Propriétaire (SOHAIB CHEKRI)
+                    </button>
+                </div>
+            </div>
+
+            <div id="register-form-container" class="hidden">
+                <form id="register-form" class="space-y-4" onsubmit="handleRegister(event)">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Prénom *</label>
+                            <input type="text" name="firstName" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                                placeholder="Jean">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Nom *</label>
+                            <input type="text" name="lastName" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                                placeholder="Dupont">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email *</label>
+                        <input type="email" name="email" required
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                            placeholder="jean.dupont@biocare-biotech.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Mot de passe *</label>
+                        <input type="password" name="password" required minlength="6"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                            placeholder="Min. 6 caractères">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Fonction *</label>
+                        <select name="role" required id="role-select"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all">
+                            <option value="">Choisir une fonction...</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white rounded-xl py-3.5 font-semibold transition-all shadow-lg shadow-cyan-500/25 mt-6">
+                        <i class="fas fa-user-plus mr-2"></i>Créer mon compte
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button onclick="showLogin()" class="text-gray-400 hover:text-white font-medium text-sm">
+                        <i class="fas fa-arrow-left mr-1"></i>Retour à la connexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden min-h-screen">
+        <nav class="glass-panel sticky top-0 z-40 border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center space-x-3 cursor-pointer" onclick="showDashboard()">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                            <i class="fas fa-bacteria text-white"></i>
+                        </div>
+                        <div class="hidden sm:block">
+                            <span class="font-bold text-xl tracking-tight block leading-none">
+                                <span class="gradient-text">BIOCARE-BIOTECH</span>
+                            </span>
+                            <span class="text-[10px] creator-badge uppercase tracking-wider">By SOHAIB CHEKRI</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button onclick="openAlertModal()" 
+                            class="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white px-4 py-2 rounded-xl font-medium transition-all shadow-lg shadow-red-500/25 flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="hidden sm:inline">Signaler</span>
+                        </button>
+
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="nav-notif-badge" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden notification-badge">0</span>
+                        </button>
+                        
+                        <div class="relative" id="profile-menu">
+                            <button onclick="toggleProfileMenu()" class="flex items-center gap-3 pl-4 border-l border-white/10 hover:bg-white/5 rounded-xl p-2 transition-all">
+                                <div class="text-right hidden sm:block">
+                                    <p class="text-sm font-medium" id="user-name">Nom Prénom</p>
+                                    <p class="text-xs text-amber-400" id="user-role">Rôle</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center border-2 border-amber-400/50 shadow-lg shadow-amber-500/30">
+                                    <i class="fas fa-crown text-white text-sm"></i>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                            </button>
+                            
+                            <div id="profile-dropdown" class="absolute right-0 top-full mt-2 w-48 glass-card rounded-xl border border-white/10 hidden overflow-hidden">
+                                <div class="p-3 border-b border-white/10 bg-amber-500/10">
+                                    <p class="text-xs text-amber-400 font-bold uppercase tracking-wider text-center">Propriétaire</p>
+                                </div>
+                                <button onclick="showProfile()" class="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors flex items-center gap-2">
+                                    <i class="fas fa-user-cog text-cyan-400"></i>
+                                    Mon profil
+                                </button>
+                                <button onclick="showDashboard()" class="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors flex items-center gap-2">
+                                    <i class="fas fa-home text-blue-400"></i>
+                                    Tableau de bord
+                                </button>
+                                <button onclick="showAdminPanel()" class="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors flex items-center gap-2 text-amber-400">
+                                    <i class="fas fa-crown"></i>
+                                    Gestion Propriétaire
+                                </button>
+                                <div class="border-t border-white/10"></div>
+                                <button onclick="logout()" class="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors text-red-400 flex items-center gap-2">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Déconnexion
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main id="dashboard-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div id="owner-banner" class="hidden mb-6 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                        <i class="fas fa-crown text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Bienvenue, SOHAIB CHEKRI</h2>
+                        <p class="text-amber-200">BIOCARE-BIOTECH - Laboratoire de Microbiologie</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">Tableau de bord</h1>
+                    <p class="text-gray-400">Signalements du laboratoire BIOCARE-BIOTECH</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="exportToExcel()" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 transition-all flex items-center gap-2 text-sm">
+                        <i class="fas fa-file-excel text-emerald-400"></i> Exporter Excel
+                    </button>
+                    <select id="filter-type" onchange="renderAlerts()" 
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-cyan-500 text-sm">
+                        <option value="all">Tous les signalements</option>
+                        <option value="missing">Produits manquants</option>
+                        <option value="outofstock">Stock épuisé</option>
+                        <option value="expired">Produits périmés</option>
+                        <option value="damaged">Matériel endommagé</option>
+                        <option value="other">Autres</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-red-500/20 rounded-lg">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold" id="stat-total">0</h3>
+                    <p class="text-gray-400 text-xs">Actifs</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-orange-500/20 rounded-lg">
+                            <i class="fas fa-box-open text-orange-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold" id="stat-missing">0</h3>
+                    <p class="text-gray-400 text-xs">Manquants</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-rose-500/20 rounded-lg">
+                            <i class="fas fa-times-circle text-rose-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold" id="stat-outofstock">0</h3>
+                    <p class="text-gray-400 text-xs">Stock épuisé</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-yellow-500/20 rounded-lg">
+                            <i class="fas fa-calendar-times text-yellow-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold" id="stat-expired">0</h3>
+                    <p class="text-gray-400 text-xs">Périmés</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-emerald-500/20 rounded-lg">
+                            <i class="fas fa-check-circle text-emerald-400"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold" id="stat-resolved">0</h3>
+                    <p class="text-gray-400 text-xs">Résolus</p>
+                </div>
+            </div>
+
+            <div id="admin-panel-btn" class="hidden mb-6">
+                <button onclick="showAdminPanel()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-3 text-lg">
+                    <i class="fas fa-crown text-2xl"></i>
+                    <span>GESTION PROPRIÉTAIRE - BIOCARE-BIOTECH</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4" id="alerts-container"></div>
+        </main>
+
+        <main id="profile-section" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center gap-4 mb-8">
+                <button onclick="showDashboard()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold">Mon profil</h1>
+                    <p class="text-amber-400 text-sm font-bold uppercase tracking-wider">LABORATOIRE MICROBIOLOGIE BIOCARE-BIOTECH</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card rounded-2xl p-6 text-center border-2 border-amber-500/30">
+                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/30">
+                        <i class="fas fa-crown text-4xl text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold mb-1" id="profile-name">SOHAIB CHEKRI</h2>
+                    <p class="text-amber-400 text-sm font-bold mb-2" id="profile-role">Analyste Microbiologie</p>
+                    <p class="text-xs creator-badge uppercase tracking-widest mb-4">CREATED BY SOHAIB CHEKRI BIOCARE-BIOTECH</p>
+                    <div class="space-y-2 text-sm text-gray-400">
+                        <p><i class="fas fa-envelope mr-2"></i><span id="profile-email">sohaibchekri@gmail.com</span></p>
+                        <p><i class="fas fa-calendar mr-2"></i>Membre depuis <span id="profile-date">--</span></p>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-amber-500/20">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-id-card text-amber-400"></i>
+                            Informations personnelles
+                        </h3>
+                        <form id="profile-form" class="space-y-4" onsubmit="updateProfile(event)">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">Prénom</label>
+                                    <input type="text" name="firstName" id="edit-firstname" required
+                                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">Nom</label>
+                                    <input type="text" name="lastName" id="edit-lastname" required
+                                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-500 transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Email</label>
+                                <input type="email" name="email" id="edit-email" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Fonction</label>
+                                <input type="text" value="Analyste Microbiologie -BIOCARE-BIOTECH" disabled
+                                    class="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2.5 text-amber-400 font-bold cursor-not-allowed">
+                            </div>
+                            <button type="submit" 
+                                class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-amber-500/25">
+                                <i class="fas fa-save mr-2"></i>Enregistrer les modifications
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-lock text-violet-400"></i>
+                            Changer le mot de passe
+                        </h3>
+                        <form id="password-form" class="space-y-4" onsubmit="changePassword(event)">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Mot de passe actuel</label>
+                                <input type="password" name="currentPassword" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-violet-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Nouveau mot de passe</label>
+                                <input type="password" name="newPassword" required minlength="6" id="new-password"
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-violet-500 transition-all"
+                                    oninput="checkPasswordStrength()">
+                                <div class="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div id="password-strength" class="h-full transition-all duration-300 w-0"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1" id="password-hint">Min. 6 caractères</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Confirmer le nouveau mot de passe</label>
+                                <input type="password" name="confirmPassword" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-violet-500 transition-all">
+                            </div>
+                            <button type="submit" 
+                                class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all">
+                                <i class="fas fa-key mr-2"></i>Changer le mot de passe
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-history text-emerald-400"></i>
+                            Mes signalements
+                        </h3>
+                        <div id="my-alerts-list" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="admin-panel" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-fade-in border-2 border-amber-500/30">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-crown text-2xl text-amber-400"></i>
+                        <div>
+                            <h2 class="text-xl font-bold">Gestion Propriétaire</h2>
+                            <p class="text-xs text-amber-400 uppercase tracking-wider">BIOCARE-BIOTECH - By SOHAIB CHEKRI</p>
+                        </div>
+                    </div>
+                    <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-6">
+                    <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-user-plus text-emerald-400"></i>
+                            Inviter un nouveau membre
+                        </h3>
+                        <form id="invite-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="inviteUser(event)">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Prénom</label>
+                                <input type="text" name="firstName" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Nom</label>
+                                <input type="text" name="lastName" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Email</label>
+                                <input type="email" name="email" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 transition-all"
+                                    placeholder="collegue@biocare-biotech.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Fonction</label>
+                                <select name="role" required id="invite-role-select"
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 transition-all">
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl py-3 font-medium transition-all">
+                                    <i class="fas fa-paper-plane mr-2"></i>Créer le compte et envoyer les identifiants
+                                </button>
+                            </div>
+                        </form>
+                        <div id="invite-success" class="hidden mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <p class="text-emerald-400 text-sm font-medium mb-2">
+                                <i class="fas fa-check-circle mr-2"></i>Compte créé avec succès !
+                            </p>
+                            <p class="text-gray-400 text-xs mb-2">Identifiants à transmettre à votre collègue :</p>
+                            <div class="bg-black/30 rounded-lg p-3 font-mono text-sm space-y-1">
+                                <p>Email : <span id="invited-email" class="text-cyan-400"></span></p>
+                                <p>Mot de passe temporaire : <span id="invited-password" class="text-yellow-400"></span></p>
+                            </div>
+                            <button onclick="copyCredentials()" class="mt-3 text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-all">
+                                <i class="fas fa-copy mr-1"></i>Copier les identifiants
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-tags text-amber-400"></i>
+                            Gérer les fonctions du laboratoire
+                        </h3>
+                        <div class="space-y-3">
+                            <div id="roles-list" class="flex flex-wrap gap-2"></div>
+                            <div class="flex gap-2 mt-4 pt-4 border-t border-white/10">
+                                <input type="text" id="new-role-input" placeholder="Nouvelle fonction..."
+                                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-amber-500 transition-all">
+                                <button onclick="addRole()" 
+                                    class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl transition-all">
+                                    <i class="fas fa-plus"></i> Ajouter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
+                        <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-users text-blue-400"></i>
+                            Membres de l'équipe BIOCARE-BIOTECH (<span id="team-count">0</span>)
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="text-left text-xs text-gray-400 border-b border-white/10">
+                                    <tr>
+                                        <th class="pb-3 font-medium">Nom</th>
+                                        <th class="pb-3 font-medium">Email</th>
+                                        <th class="pb-3 font-medium">Fonction</th>
+                                        <th class="pb-3 font-medium">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="team-list" class="text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAlertModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar animate-fade-in">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                        Nouveau signalement
+                    </h2>
+                    <button onclick="closeAlertModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="alert-form" class="p-6 space-y-4" onsubmit="submitAlert(event)">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Type de problème *</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="missing" class="hidden peer" checked onchange="toggleExpiryField()">
+                                <div class="p-2 rounded-xl border border-white/10 bg-white/5 peer-checked:border-orange-500 peer-checked:bg-orange-500/10 text-center transition-all">
+                                    <i class="fas fa-box-open text-xl mb-1 block text-orange-400"></i>
+                                    <span class="text-xs">Manquant</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="outofstock" class="hidden peer" onchange="toggleExpiryField()">
+                                <div class="p-2 rounded-xl border border-white/10 bg-white/5 peer-checked:border-rose-500 peer-checked:bg-rose-500/10 text-center transition-all">
+                                    <i class="fas fa-times-circle text-xl mb-1 block text-rose-400"></i>
+                                    <span class="text-xs">Stock épuisé</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="expired" class="hidden peer" onchange="toggleExpiryField()">
+                                <div class="p-2 rounded-xl border border-white/10 bg-white/5 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 text-center transition-all">
+                                    <i class="fas fa-calendar-times text-xl mb-1 block text-yellow-400"></i>
+                                    <span class="text-xs">Périmé</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="damaged" class="hidden peer" onchange="toggleExpiryField()">
+                                <div class="p-2 rounded-xl border border-white/10 bg-white/5 peer-checked:border-violet-500 peer-checked:bg-violet-500/10 text-center transition-all">
+                                    <i class="fas fa-tools text-xl mb-1 block text-violet-400"></i>
+                                    <span class="text-xs">Endommagé</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer col-span-2">
+                                <input type="radio" name="type" value="other" class="hidden peer" onchange="toggleExpiryField()">
+                                <div class="p-2 rounded-xl border border-white/10 bg-white/5 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10 text-center transition-all">
+                                    <i class="fas fa-question-circle text-xl mb-1 block text-cyan-400"></i>
+                                    <span class="text-xs">Autre problème</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Nom du produit *</label>
+                        <input type="text" name="productName" required
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                            placeholder="Ex: Milieu de culture PCA, Boîtes de Pétri...">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Référence/Catalogue</label>
+                        <input type="text" name="reference"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
+                            placeholder="N° de lot ou référence fournisseur">
+                    </div>
+
+                    <div id="expiry-field" class="hidden">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Date de péremption</label>
+                        <input type="date" name="expiryDate"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Urgence</label>
+                        <div class="flex gap-3">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="urgency" value="low" class="hidden peer">
+                                <div class="p-2 rounded-lg border border-white/10 bg-white/5 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 text-center text-sm transition-all">
+                                    Basse
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="urgency" value="medium" class="hidden peer" checked>
+                                <div class="p-2 rounded-lg border border-white/10 bg-white/5 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 text-center text-sm transition-all">
+                                    Moyenne
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="urgency" value="high" class="hidden peer">
+                                <div class="p-2 rounded-lg border border-white/10 bg-white/5 peer-checked:border-red-500 peer-checked:bg-red-500/10 text-center text-sm transition-all">
+                                    Haute
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Description / Notes</label>
+                        <textarea name="notes" rows="3"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all resize-none"
+                            placeholder="Détails supplémentaires..."></textarea>
+                    </div>
+
+                    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 flex items-start gap-3">
+                        <i class="fas fa-info-circle text-yellow-400 mt-0.5"></i>
+                        <p class="text-sm text-yellow-200">
+                            Tous les membres de BIOCARE-BIOTECH seront notifiés de ce signalement.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closeAlertModal()" 
+                            class="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-3 font-medium transition-all">
+                            Annuler
+                        </button>
+                        <button type="submit" 
+                            class="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-xl py-3 font-medium transition-all shadow-lg shadow-red-500/25">
+                            <i class="fas fa-paper-plane mr-2"></i>Signaler & Notifier
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="glass-card bg-gray-900 border border-white/10 rounded-xl px-6 py-4 flex items-center gap-3 shadow-2xl">
+            <div id="toast-icon" class="w-8 h-8 rounded-full flex items-center justify-center"></div>
+            <div>
+                <h4 id="toast-title" class="font-medium"></h4>
+                <p id="toast-message" class="text-sm text-gray-400"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK - Configuration BIOCARE-BIOTECH UNIQUE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs,
+            deleteDoc,
+            updateDoc,
+            doc,
+            onSnapshot, 
+            query, 
+            orderBy,
+            Timestamp 
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Configuration BIOCARE-BIOTECH (CORRECTE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSSVxLYLN2hx0hNCkbYwfGl--H8UZFnCw",
+            authDomain: "biocare-biotech.firebaseapp.com",
+            projectId: "biocare-biotech",
+            storageBucket: "biocare-biotech.firebasestorage.app",
+            messagingSenderId: "136143925673",
+            appId: "1:136143925673:web:8c2b51a2bdbee662e594b8",
+            measurementId: "G-X97B7HJ9Y4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const alertsCollection = collection(db, "alerts");
+        const usersCollection = collection(db, "users");
+
+        // Rendre disponible globalement
+        window.db = db;
+        window.isOnline = navigator.onLine;
+        window.alerts = []; // Initialiser comme tableau vide, sera rempli par Firestore
+
+        // Gestionnaire de statut de connexion
+        window.addEventListener('online', () => {
+            window.isOnline = true;
+            updateSyncStatus(true);
+            syncPendingAlerts();
+        });
+        
+        window.addEventListener('offline', () => {
+            window.isOnline = false;
+            updateSyncStatus(false);
+        });
+
+        function updateSyncStatus(online) {
+            const statusEl = document.getElementById('sync-status');
+            const textEl = document.getElementById('sync-text');
+            if (statusEl) {
+                statusEl.classList.remove('hidden');
+                if (online) {
+                    statusEl.className = 'sync-status sync-online';
+                    textEl.innerHTML = '<i class="fas fa-cloud mr-2"></i>Synchronisé avec BIOCARE-BIOTECH';
+                } else {
+                    statusEl.className = 'sync-status sync-offline';
+                    textEl.innerHTML = '<i class="fas fa-wifi-slash mr-2"></i>Mode hors-ligne';
+                }
+            }
+        }
+
+        // Synchroniser les alertes en attente
+        async function syncPendingAlerts() {
+            const pending = JSON.parse(localStorage.getItem('pendingAlerts')) || [];
+            if (pending.length === 0) return;
+            
+            for (const alert of pending) {
+                try {
+                    await addDoc(alertsCollection, {
+                        ...alert,
+                        syncedAt: Timestamp.now()
+                    });
+                } catch (e) {
+                    console.error("Erreur sync:", e);
+                }
+            }
+            localStorage.setItem('pendingAlerts', JSON.stringify([]));
+            showToast('success', 'Synchronisation', `${pending.length} alerte(s) synchronisée(s)`);
+        }
+
+        // Fonctions exposées globalement
+        window.addAlertToFirestore = async (alertData) => {
+            try {
+                const docRef = await addDoc(alertsCollection, {
+                    ...alertData,
+                    createdAt: Timestamp.now()
+                });
+                return docRef.id;
+            } catch (error) {
+                console.error("Erreur ajout Firestore:", error);
+                const pending = JSON.parse(localStorage.getItem('pendingAlerts')) || [];
+                pending.push(alertData);
+                localStorage.setItem('pendingAlerts', JSON.stringify(pending));
+                throw error;
+            }
+        };
+
+        window.deleteAlertFromFirestore = async (alertId) => {
+            try {
+                await deleteDoc(doc(db, "alerts", alertId));
+            } catch (error) {
+                console.error("Erreur suppression:", error);
+                throw error;
+            }
+        };
+
+        window.updateAlertInFirestore = async (alertId, updates) => {
+            try {
+                await updateDoc(doc(db, "alerts", alertId), updates);
+            } catch (error) {
+                console.error("Erreur mise à jour:", error);
+                throw error;
+            }
+        };
+
+        window.setupRealtimeAlerts = () => {
+            const q = query(alertsCollection, orderBy("date", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const alertsData = [];
+                snapshot.forEach((doc) => {
+                    alertsData.push({ id: doc.id, ...doc.data() });
+                });
+                window.alerts = alertsData; // Mettre à jour window.alerts avec les données Firestore
+                localStorage.setItem('labAlerts', JSON.stringify(alertsData));
+                
+                // Appeler renderAlerts et updateStats APRÈS avoir mis à jour window.alerts
+                if (typeof renderAlerts === 'function') renderAlerts();
+                if (typeof updateStats === 'function') updateStats();
+                
+                updateSyncStatus(true);
+                console.log("Données synchronisées:", alertsData.length, "alertes");
+            }, (error) => {
+                console.error("Erreur temps réel:", error);
+                updateSyncStatus(false);
+                // Fallback sur localStorage
+                window.alerts = JSON.parse(localStorage.getItem('labAlerts')) || [];
+                if (typeof renderAlerts === 'function') renderAlerts();
+                if (typeof updateStats === 'function') updateStats();
+            });
+        };
+
+        window.loadAlertsFromFirestore = async () => {
+            try {
+                const q = query(alertsCollection, orderBy("date", "desc"));
+                const snapshot = await getDocs(q);
+                const alertsData = [];
+                snapshot.forEach((doc) => {
+                    alertsData.push({ id: doc.id, ...doc.data() });
+                });
+                window.alerts = alertsData; // Mettre à jour window.alerts
+                localStorage.setItem('labAlerts', JSON.stringify(alertsData));
+                updateSyncStatus(true);
+                console.log("Données chargées:", alertsData.length, "alertes");
+            } catch (error) {
+                console.error("Erreur chargement:", error);
+                updateSyncStatus(false);
+                window.alerts = JSON.parse(localStorage.getItem('labAlerts')) || [];
+            }
+        };
+
+        // Initialiser le statut
+        updateSyncStatus(navigator.onLine);
+    </script>
+
+    <script>
+        // CONSTANTES
+        const OWNER_PASSWORD = 'FARAH2025+';
+        
+        let availableRoles = JSON.parse(localStorage.getItem('labRoles')) || [
+            { id: 'analyste_microbio', label: 'Analyste Microbiologie', color: 'amber' },
+            { id: 'responsable_cq', label: 'Responsable CQ', color: 'red' },
+            { id: 'superviseur', label: 'Superviseur microbiologie', color: 'red' }
+        ];
+
+        let users = JSON.parse(localStorage.getItem('labUsers')) || [
+            {
+                id: 999999,
+                firstName: "SOHAIB",
+                lastName: "CHEKRI",
+                email: "sohaibchekri@gmail.com",
+                password: "FARAH2025+",
+                role: "analyste_microbio",
+                isOwner: true,
+                createdBy: 'system',
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        // NE PAS initialiser alerts ici - il est déjà initialisé dans le module Firebase
+        // let alerts = [];  <- SUPPRIMÉ
+        
+        let notifications = JSON.parse(localStorage.getItem('labNotifications')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let lastInvitedCredentials = null;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadRoles();
+            if (currentUser) {
+                await showMainApp();
+            }
+        });
+
+        function loadRoles() {
+            const selects = ['role-select', 'invite-role-select'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Choisir une fonction...</option>' +
+                        availableRoles.map(role => 
+                            `<option value="${role.id}">${role.label}</option>`
+                        ).join('');
+                }
+            });
+        }
+
+        function showRegister() {
+            document.getElementById('login-form-container').classList.add('hidden');
+            document.getElementById('register-form-container').classList.remove('hidden');
+            loadRoles();
+        }
+
+        function showLogin() {
+            document.getElementById('register-form-container').classList.add('hidden');
+            document.getElementById('login-form-container').classList.remove('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                showToast('success', 'Connexion réussie', `Bienvenue ${user.firstName} !`);
+                setTimeout(showMainApp, 500);
+            } else {
+                showToast('error', 'Erreur de connexion', 'Email ou mot de passe incorrect');
+            }
+        }
+
+        function openOwnerModal() {
+            document.getElementById('owner-modal').classList.remove('hidden');
+            document.getElementById('owner-password-input').value = '';
+            document.getElementById('owner-password-input').focus();
+        }
+
+        function closeOwnerModal() {
+            document.getElementById('owner-modal').classList.add('hidden');
+            document.getElementById('owner-password-input').value = '';
+        }
+
+        function toggleOwnerPasswordVisibility() {
+            const input = document.getElementById('owner-password-input');
+            const eye = document.getElementById('owner-password-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.classList.remove('fa-eye');
+                eye.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                eye.classList.remove('fa-eye-slash');
+                eye.classList.add('fa-eye');
+            }
+        }
+
+        function verifyOwnerPassword() {
+            const input = document.getElementById('owner-password-input');
+            const password = input.value.trim();
+
+            if (!password) {
+                showToast('error', 'Erreur', 'Veuillez entrer le mot de passe');
+                return;
+            }
+
+            if (password !== OWNER_PASSWORD) {
+                showToast('error', 'Accès refusé', 'Mot de passe propriétaire incorrect');
+                input.value = '';
+                input.focus();
+                return;
+            }
+
+            closeOwnerModal();
+            proceedWithOwnerLogin();
+        }
+
+        function proceedWithOwnerLogin() {
+            const owner = users.find(u => u.isOwner) || users.find(u => u.email === 'sohaibchekri@gmail.com');
+            
+            if (owner) {
+                currentUser = owner;
+                localStorage.setItem('currentUser', JSON.stringify(owner));
+                showToast('success', 'Bienvenue Propriétaire', 'SOHAIB CHEKRI - BIOCARE-BIOTECH');
+                setTimeout(showMainApp, 500);
+            } else {
+                const newOwner = {
+                    id: 999999,
+                    firstName: "SOHAIB",
+                    lastName: "CHEKRI",
+                    email: "sohaibchekri@gmail.com",
+                    password: OWNER_PASSWORD,
+                    role: "analyste_microbio",
+                    isOwner: true,
+                    createdBy: 'system',
+                    createdAt: new Date().toISOString()
+                };
+                users.push(newOwner);
+                localStorage.setItem('labUsers', JSON.stringify(users));
+                currentUser = newOwner;
+                localStorage.setItem('currentUser', JSON.stringify(newOwner));
+                showToast('success', 'Compte propriétaire créé', 'Bienvenue SOHAIB CHEKRI - BIOCARE-BIOTECH');
+                setTimeout(showMainApp, 500);
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            if (users.find(u => u.email === formData.get('email'))) {
+                showToast('error', 'Erreur', 'Cet email est déjà utilisé');
+                return;
+            }
+
+            const newUser = {
+                id: Date.now(),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                isOwner: false,
+                createdBy: 'self',
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('labUsers', JSON.stringify(users));
+            
+            currentUser = newUser;
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            
+            showToast('success', 'Compte créé', `Bienvenue ${newUser.firstName} !`);
+            setTimeout(showMainApp, 500);
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            showToast('info', 'Déconnexion', 'À bientôt !');
+        }
+
+        async function showMainApp() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Charger les alertes depuis Firestore d'abord
+            if (typeof loadAlertsFromFirestore === 'function') {
+                await loadAlertsFromFirestore();
+            }
+            
+            showDashboard();
+            
+            // Activer le temps réel APRÈS avoir affiché le dashboard
+            if (typeof setupRealtimeAlerts === 'function') {
+                setupRealtimeAlerts();
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('profile-section').classList.add('hidden');
+            document.getElementById('profile-dropdown').classList.add('hidden');
+            
+            if (currentUser && currentUser.isOwner) {
+                document.getElementById('owner-banner').classList.remove('hidden');
+                document.getElementById('admin-panel-btn').classList.remove('hidden');
+                document.getElementById('user-role').textContent = 'Analyste Microbiologiste - Propriétaire';
+                document.getElementById('user-role').classList.add('text-amber-400');
+            } else {
+                document.getElementById('owner-banner').classList.add('hidden');
+                document.getElementById('admin-panel-btn').classList.add('hidden');
+                const roleLabel = availableRoles.find(r => r.id === currentUser?.role)?.label || currentUser?.role;
+                document.getElementById('user-role').textContent = roleLabel;
+                document.getElementById('user-role').classList.remove('text-amber-400');
+            }
+            
+            document.getElementById('user-name').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+            
+            // Utiliser window.alerts qui est maintenu par Firestore
+            renderAlerts();
+            updateStats();
+            updateNotificationBadge();
+            renderNotifications();
+        }
+
+        function showProfile() {
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('profile-section').classList.remove('hidden');
+            document.getElementById('profile-dropdown').classList.add('hidden');
+            loadProfileData();
+        }
+
+        function toggleProfileMenu() {
+            const dropdown = document.getElementById('profile-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function loadProfileData() {
+            document.getElementById('profile-name').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+            const roleLabel = availableRoles.find(r => r.id === currentUser.role)?.label || currentUser.role;
+            document.getElementById('profile-role').textContent = currentUser.isOwner ? 'Analyste Microbiologie - BIOCARE-BIOTECH' : roleLabel;
+            document.getElementById('profile-email').textContent = currentUser.email;
+            document.getElementById('profile-date').textContent = currentUser.createdAt ? 
+                new Date(currentUser.createdAt).toLocaleDateString('fr-FR') : 'N/A';
+
+            document.getElementById('edit-firstname').value = currentUser.firstName;
+            document.getElementById('edit-lastname').value = currentUser.lastName;
+            document.getElementById('edit-email').value = currentUser.email;
+
+            renderMyAlerts();
+        }
+
+        function renderMyAlerts() {
+            const container = document.getElementById('my-alerts-list');
+            // Utiliser window.alerts
+            const myAlerts = window.alerts.filter(a => a.reportedBy && a.reportedBy.id === currentUser.id);
+            
+            if (myAlerts.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">Vous n\'avez pas encore fait de signalements</p>';
+                return;
+            }
+
+            container.innerHTML = myAlerts.slice(0, 10).map(alert => `
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg ${getTypeStyle(alert.type)} flex items-center justify-center">
+                            ${getTypeIcon(alert.type)}
+                        </div>
+                        <div>
+                            <p class="font-medium text-sm">${alert.productName}</p>
+                            <p class="text-xs text-gray-400">${getTypeLabel(alert.type)} • ${formatDate(alert.date)}</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-1 rounded-full text-xs ${alert.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                        ${alert.status === 'resolved' ? 'Résolu' : 'En attente'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function updateProfile(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            const emailExists = users.find(u => u.email === formData.get('email') && u.id !== currentUser.id);
+            if (emailExists) {
+                showToast('error', 'Erreur', 'Cet email est déjà utilisé par un autre membre');
+                return;
+            }
+
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex].firstName = formData.get('firstName');
+                users[userIndex].lastName = formData.get('lastName');
+                users[userIndex].email = formData.get('email');
+                
+                currentUser = users[userIndex];
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('labUsers', JSON.stringify(users));
+                
+                document.getElementById('user-name').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+                loadProfileData();
+                
+                showToast('success', 'Profil mis à jour', 'Vos informations ont été enregistrées');
+            }
+        }
+
+        function changePassword(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const currentPassword = formData.get('currentPassword');
+            const newPassword = formData.get('newPassword');
+            const confirmPassword = formData.get('confirmPassword');
+
+            if (currentPassword !== currentUser.password) {
+                showToast('error', 'Erreur', 'Mot de passe actuel incorrect');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('error', 'Erreur', 'Les nouveaux mots de passe ne correspondent pas');
+                return;
+            }
+
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex].password = newPassword;
+                delete users[userIndex].isTempPassword;
+                
+                currentUser = users[userIndex];
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('labUsers', JSON.stringify(users));
+                
+                document.getElementById('password-form').reset();
+                document.getElementById('password-strength').style.width = '0';
+                
+                showToast('success', 'Mot de passe changé', 'Votre mot de passe a été mis à jour avec succès');
+            }
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('new-password').value;
+            const strengthBar = document.getElementById('password-strength');
+            const hint = document.getElementById('password-hint');
+            
+            let strength = 0;
+            if (password.length >= 6) strength++;
+            if (password.length >= 10) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-emerald-500'];
+            const widths = ['20%', '40%', '60%', '80%', '100%'];
+            const texts = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+
+            strengthBar.className = `h-full transition-all duration-300 ${colors[strength - 1] || 'bg-red-500'}`;
+            strengthBar.style.width = widths[strength - 1] || '10%';
+            hint.textContent = texts[strength - 1] || 'Trop court';
+            hint.className = `text-xs mt-1 ${strength >= 3 ? 'text-emerald-400' : 'text-gray-500'}`;
+        }
+
+        function showAdminPanel() {
+            if (!currentUser.isOwner) {
+                showToast('error', 'Accès refusé', 'Seul le propriétaire peut accéder à cette section');
+                return;
+            }
+            document.getElementById('admin-panel').classList.remove('hidden');
+            loadRoles();
+            renderRoles();
+            renderTeamList();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('admin-panel').classList.add('hidden');
+            document.getElementById('invite-success').classList.add('hidden');
+            document.getElementById('invite-form').reset();
+        }
+
+        function inviteUser(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            
+            if (users.find(u => u.email === email)) {
+                showToast('error', 'Erreur', 'Cet email est déjà utilisé');
+                return;
+            }
+
+            const tempPassword = Math.random().toString(36).substring(2, 10) + 'A1!';
+            
+            const newUser = {
+                id: Date.now(),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: email,
+                password: tempPassword,
+                role: formData.get('role'),
+                isOwner: false,
+                createdBy: currentUser.id,
+                createdAt: new Date().toISOString(),
+                isTempPassword: true
+            };
+
+            users.push(newUser);
+            localStorage.setItem('labUsers', JSON.stringify(users));
+            
+            lastInvitedCredentials = { email, password: tempPassword };
+            document.getElementById('invited-email').textContent = email;
+            document.getElementById('invited-password').textContent = tempPassword;
+            document.getElementById('invite-success').classList.remove('hidden');
+            
+            renderTeamList();
+            
+            addNotification(
+                'Nouveau membre',
+                `${newUser.firstName} ${newUser.lastName} a rejoint l'équipe BIOCARE-BIOTECH`,
+                'system',
+                'fa-user-plus'
+            );
+        }
+
+        function copyCredentials() {
+            if (!lastInvitedCredentials) return;
+            const text = `Voici vos identifiants pour BIOCARE-BIOTECH (créé par SOHAIB CHEKRI) :\nEmail: ${lastInvitedCredentials.email}\nMot de passe: ${lastInvitedCredentials.password}\n\nConnectez-vous sur la plateforme et changez votre mot de passe.`;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('success', 'Copié', 'Identifiants copiés dans le presse-papiers');
+            });
+        }
+
+        function renderRoles() {
+            const container = document.getElementById('roles-list');
+            container.innerHTML = availableRoles.map(role => `
+                <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                    <span class="text-sm">${role.label}</span>
+                    <button onclick="removeRole('${role.id}')" class="text-red-400 hover:text-red-300 text-xs">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addRole() {
+            const input = document.getElementById('new-role-input');
+            const label = input.value.trim();
+            
+            if (!label) return;
+            
+            const id = label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
+            
+            if (availableRoles.find(r => r.id === id)) {
+                showToast('error', 'Erreur', 'Cette fonction existe déjà');
+                return;
+            }
+            
+            availableRoles.push({
+                id: id,
+                label: label,
+                color: 'gray'
+            });
+            
+            localStorage.setItem('labRoles', JSON.stringify(availableRoles));
+            input.value = '';
+            renderRoles();
+            loadRoles();
+            showToast('success', 'Fonction ajoutée', `"${label}" est maintenant disponible`);
+        }
+
+        function removeRole(roleId) {
+            const usersWithRole = users.filter(u => u.role === roleId).length;
+            if (usersWithRole > 0) {
+                if (!confirm(`Attention : ${usersWithRole} utilisateur(s) ont cette fonction. Continuer ?`)) {
+                    return;
+                }
+            }
+            
+            availableRoles = availableRoles.filter(r => r.id !== roleId);
+            localStorage.setItem('labRoles', JSON.stringify(availableRoles));
+            renderRoles();
+            loadRoles();
+            showToast('success', 'Fonction supprimée');
+        }
+
+        function renderTeamList() {
+            const tbody = document.getElementById('team-list');
+            document.getElementById('team-count').textContent = users.length;
+            
+            tbody.innerHTML = users.map(user => {
+                const roleLabel = availableRoles.find(r => r.id === user.role)?.label || user.role;
+                const isCurrentUser = user.id === currentUser.id;
+                const isOwner = user.isOwner;
+                
+                return `
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors ${isOwner ? 'bg-amber-500/10' : ''}">
+                        <td class="py-3 font-medium">
+                            ${user.firstName} ${user.lastName}
+                            ${isOwner ? '<span class="text-xs text-amber-400 ml-2"><i class="fas fa-crown"></i> Propriétaire</span>' : ''}
+                            ${isCurrentUser && !isOwner ? '<span class="text-xs text-cyan-400 ml-2">(Vous)</span>' : ''}
+                        </td>
+                        <td class="py-3 text-gray-400">${user.email}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-1 rounded-full text-xs bg-white/10">${roleLabel}</span>
+                        </td>
+                        <td class="py-3">
+                            ${!isOwner ? `
+                                <button onclick="deleteUser(${user.id})" class="text-red-400 hover:text-red-300 text-xs transition-colors">
+                                    <i class="fas fa-trash mr-1"></i>Supprimer
+                                </button>
+                            ` : '<span class="text-amber-400 text-xs">Non supprimable</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return;
+            
+            users = users.filter(u => u.id !== userId);
+            localStorage.setItem('labUsers', JSON.stringify(users));
+            renderTeamList();
+            showToast('success', 'Membre supprimé');
+        }
+
+        function toggleNotifications() {
+            const center = document.getElementById('notification-center');
+            center.classList.toggle('hidden');
+            if (!center.classList.contains('hidden')) {
+                renderNotifications();
+                notifications.forEach(n => n.read = true);
+                localStorage.setItem('labNotifications', JSON.stringify(notifications));
+                updateNotificationBadge();
+            }
+        }
+
+        function updateNotificationBadge() {
+            const unread = notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('nav-notif-badge');
+            const count = document.getElementById('notif-count');
+            
+            if (unread > 0) {
+                badge.textContent = unread > 9 ? '9+' : unread;
+                badge.classList.remove('hidden');
+                count.textContent = unread;
+                count.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                count.classList.add('hidden');
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notifications-list');
+            
+            if (notifications.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Aucune notification</p>';
+                return;
+            }
+
+            list.innerHTML = notifications.slice().reverse().map(notif => `
+                <div class="p-3 rounded-xl ${notif.read ? 'bg-white/5' : 'bg-cyan-500/10 border border-cyan-500/20'} flex items-start gap-3 slide-in-right">
+                    <div class="w-8 h-8 rounded-full ${getNotifIconBg(notif.type)} flex items-center justify-center flex-shrink-0">
+                        <i class="fas ${notif.icon} text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">${notif.title}</p>
+                        <p class="text-xs text-gray-400">${notif.message}</p>
+                        <p class="text-xs text-gray-500 mt-1">${formatDate(notif.date)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getNotifIconBg(type) {
+            const styles = {
+                new_alert: 'bg-red-500/20 text-red-400',
+                resolved: 'bg-emerald-500/20 text-emerald-400',
+                status_change: 'bg-yellow-500/20 text-yellow-400',
+                system: 'bg-cyan-500/20 text-cyan-400'
+            };
+            return styles[type] || 'bg-gray-500/20 text-gray-400';
+        }
+
+        function clearAllNotifications() {
+            notifications = [];
+            localStorage.setItem('labNotifications', JSON.stringify(notifications));
+            renderNotifications();
+            updateNotificationBadge();
+        }
+
+        function addNotification(title, message, type, icon) {
+            const notif = {
+                id: Date.now(),
+                title,
+                message,
+                type,
+                icon,
+                date: new Date().toISOString(),
+                read: false
+            };
+            notifications.push(notif);
+            localStorage.setItem('labNotifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            showToast(type === 'new_alert' ? 'error' : type === 'resolved' ? 'success' : 'info', title, message);
+        }
+
+        function notifyAllMembers(alertData, action) {
+            const typeLabels = {
+                missing: 'Produit manquant',
+                outofstock: 'Stock épuisé',
+                expired: 'Produit périmé',
+                damaged: 'Matériel endommagé',
+                other: 'Autre problème'
+            };
+
+            if (action === 'new') {
+                addNotification(
+                    `Nouveau signalement : ${typeLabels[alertData.type]}`,
+                    `${alertData.reportedBy.firstName} ${alertData.reportedBy.lastName} a signalé : ${alertData.productName}`,
+                    'new_alert',
+                    'fa-exclamation-circle'
+                );
+            } else if (action === 'resolved') {
+                addNotification(
+                    'Problème résolu',
+                    `${alertData.productName} a été marqué comme résolu par ${currentUser.firstName} ${currentUser.lastName}`,
+                    'resolved',
+                    'fa-check-circle'
+                );
+            } else if (action === 'deleted') {
+                addNotification(
+                    'Signalement supprimé',
+                    `${alertData.productName} a été supprimé par ${currentUser.firstName} ${currentUser.lastName}`,
+                    'status_change',
+                    'fa-trash'
+                );
+            }
+        }
+
+        function openAlertModal() {
+            document.getElementById('alert-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            document.getElementById('alert-form').reset();
+            toggleExpiryField();
+        }
+
+        function toggleExpiryField() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const expiryField = document.getElementById('expiry-field');
+            if (type === 'expired') {
+                expiryField.classList.remove('hidden');
+            } else {
+                expiryField.classList.add('hidden');
+            }
+        }
+
+        async function submitAlert(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const newAlert = {
+                type: formData.get('type'),
+                productName: formData.get('productName'),
+                reference: formData.get('reference'),
+                expiryDate: formData.get('expiryDate') || null,
+                urgency: formData.get('urgency'),
+                status: 'pending',
+                reportedBy: {
+                    id: currentUser.id,
+                    firstName: currentUser.firstName,
+                    lastName: currentUser.lastName,
+                    role: currentUser.role
+                },
+                date: new Date().toISOString(),
+                notes: formData.get('notes')
+            };
+
+            try {
+                // Essayer d'ajouter à Firestore
+                if (typeof addAlertToFirestore === 'function' && window.isOnline) {
+                    const docId = await addAlertToFirestore(newAlert);
+                    newAlert.id = docId;
+                    // Ajouter à window.alerts immédiatement pour l'affichage
+                    window.alerts.unshift(newAlert);
+                    showToast('success', 'Signalement créé', 'Synchronisé avec le cloud');
+                } else {
+                    // Mode offline
+                    newAlert.id = Date.now().toString();
+                    window.alerts.unshift(newAlert);
+                    localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
+                    showToast('warning', 'Mode hors-ligne', 'Sauvegardé localement');
+                }
+                
+                notifyAllMembers(newAlert, 'new');
+                closeAlertModal();
+                renderAlerts();
+                updateStats();
+            } catch (error) {
+                console.error("Erreur:", error);
+                // Fallback local
+                newAlert.id = Date.now().toString();
+                window.alerts.unshift(newAlert);
+                localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
+                showToast('warning', 'Erreur de sync', 'Sauvegarde locale uniquement');
+                closeAlertModal();
+                renderAlerts();
+                updateStats();
+            }
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alerts-container');
+            const filter = document.getElementById('filter-type').value;
+            
+            // Utiliser window.alerts au lieu de alerts
+            let filtered = window.alerts.filter(a => filter === 'all' || a.type === filter);
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-check-circle text-5xl mb-4 text-emerald-500/50"></i>
+                        <p class="text-lg">Aucun signalement actif</p>
+                        <p class="text-sm">Tout va bien dans le laboratoire BIOCARE-BIOTECH !</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(alert => `
+                <div class="glass-card rounded-2xl p-6 animate-fade-in">
+                    <div class="flex flex-col md:flex-row justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-start gap-4 mb-3">
+                                <div class="w-12 h-12 rounded-xl ${getTypeStyle(alert.type)} flex items-center justify-center text-2xl flex-shrink-0">
+                                    ${getTypeIcon(alert.type)}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                        <h3 class="font-bold text-lg">${alert.productName}</h3>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${getUrgencyStyle(alert.urgency)}">
+                                            ${getUrgencyLabel(alert.urgency)}
+                                        </span>
+                                        ${alert.status === 'resolved' ? '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Résolu</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-400">
+                                        <i class="fas fa-user-circle mr-1"></i>
+                                        Signalé par ${alert.reportedBy.firstName} ${alert.reportedBy.lastName} (${getRoleLabel(alert.reportedBy.role)})
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-clock mr-1"></i>
+                                        ${formatDate(alert.date)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
+                                ${alert.reference ? `
+                                    <div class="bg-white/5 rounded-lg p-2">
+                                        <span class="text-gray-400 text-xs block">Référence</span>
+                                        <span class="font-medium">${alert.reference}</span>
+                                    </div>
+                                ` : ''}
+                                ${alert.expiryDate ? `
+                                    <div class="bg-white/5 rounded-lg p-2">
+                                        <span class="text-gray-400 text-xs block">Péremption</span>
+                                        <span class="font-medium text-red-400">${formatDateFR(alert.expiryDate)}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="bg-white/5 rounded-lg p-2">
+                                    <span class="text-gray-400 text-xs block">Type</span>
+                                    <span class="font-medium">${getTypeLabel(alert.type)}</span>
+                                </div>
+                            </div>
+
+                            ${alert.notes ? `
+                                <div class="bg-white/5 rounded-lg p-3 text-sm text-gray-300">
+                                    <i class="fas fa-comment-alt text-gray-500 mr-2"></i>${alert.notes}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="flex md:flex-col gap-2 justify-end">
+                            ${alert.status !== 'resolved' ? `
+                                <button onclick="resolveAlert('${alert.id}')" 
+                                    class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2">
+                                    <i class="fas fa-check"></i>
+                                    <span class="hidden md:inline">Résolu</span>
+                                </button>
+                            ` : `
+                                <button onclick="reopenAlert('${alert.id}')" 
+                                    class="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2">
+                                    <i class="fas fa-undo"></i>
+                                    <span class="hidden md:inline">Rouvrir</span>
+                                </button>
+                            `}
+                            
+                            ${currentUser.isOwner || currentUser.id === alert.reportedBy.id ? `
+                                <button onclick="deleteAlert('${alert.id}')" 
+                                    class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="hidden md:inline">Supprimer</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getRoleLabel(roleId) {
+            return availableRoles.find(r => r.id === roleId)?.label || roleId;
+        }
+
+        async function resolveAlert(id) {
+            const alert = window.alerts.find(a => a.id == id);
+            if (alert) {
+                alert.status = 'resolved';
+                alert.resolvedBy = `${currentUser.firstName} ${currentUser.lastName}`;
+                alert.resolvedDate = new Date().toISOString();
+                
+                try {
+                    if (typeof updateAlertInFirestore === 'function' && window.isOnline) {
+                        await updateAlertInFirestore(id, {
+                            status: 'resolved',
+                            resolvedBy: alert.resolvedBy,
+                            resolvedDate: alert.resolvedDate
+                        });
+                    }
+                } catch (e) {
+                    console.log("Update local uniquement");
+                }
+                
+                localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
+                notifyAllMembers(alert, 'resolved');
+                renderAlerts();
+                updateStats();
+            }
+        }
+
+        async function reopenAlert(id) {
+            const alert = window.alerts.find(a => a.id == id);
+            if (alert) {
+                alert.status = 'pending';
+                delete alert.resolvedBy;
+                delete alert.resolvedDate;
+                
+                try {
+                    if (typeof updateAlertInFirestore === 'function' && window.isOnline) {
+                        await updateAlertInFirestore(id, {
+                            status: 'pending',
+                            resolvedBy: null,
+                            resolvedDate: null
+                        });
+                    }
+                } catch (e) {
+                    console.log("Update local uniquement");
+                }
+                
+                localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
+                addNotification(
+                    'Signalement rouvert',
+                    `${alert.productName} a été rouvert par ${currentUser.firstName} ${currentUser.lastName}`,
+                    'status_change',
+                    'fa-undo'
+                );
+                renderAlerts();
+                updateStats();
+            }
+        }
+
+        async function deleteAlert(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce signalement ?')) {
+                const alert = window.alerts.find(a => a.id == id);
+                
+                try {
+                    if (typeof deleteAlertFromFirestore === 'function' && window.isOnline) {
+                        await deleteAlertFromFirestore(id);
+                    }
+                } catch (e) {
+                    console.log("Suppression locale uniquement");
+                }
+                
+                window.alerts = window.alerts.filter(a => a.id != id);
+                localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
+                notifyAllMembers(alert, 'deleted');
+                renderAlerts();
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            // Utiliser window.alerts
+            const active = window.alerts.filter(a => a.status !== 'resolved').length;
+            const missing = window.alerts.filter(a => a.type === 'missing' && a.status !== 'resolved').length;
+            const outofstock = window.alerts.filter(a => a.type === 'outofstock' && a.status !== 'resolved').length;
+            const expired = window.alerts.filter(a => a.type === 'expired' && a.status !== 'resolved').length;
+            const resolvedThisMonth = window.alerts.filter(a => {
+                if (a.status !== 'resolved' || !a.resolvedDate) return false;
+                const resolved = new Date(a.resolvedDate);
+                const now = new Date();
+                return resolved.getMonth() === now.getMonth() && resolved.getFullYear() === now.getFullYear();
+            }).length;
+
+            document.getElementById('stat-total').textContent = active;
+            document.getElementById('stat-missing').textContent = missing;
+            document.getElementById('stat-outofstock').textContent = outofstock;
+            document.getElementById('stat-expired').textContent = expired;
+            document.getElementById('stat-resolved').textContent = resolvedThisMonth;
+        }
+
+        function exportToExcel() {
+            // Utiliser window.alerts
+            const data = window.alerts.map(a => ({
+                'Date': formatDateFR(a.date),
+                'Type': getTypeLabel(a.type),
+                'Produit': a.productName,
+                'Référence': a.reference || '-',
+                'Urgence': getUrgencyLabel(a.urgency),
+                'Signalé par': `${a.reportedBy.firstName} ${a.reportedBy.lastName}`,
+                'Fonction': getRoleLabel(a.reportedBy.role),
+                'Statut': a.status === 'resolved' ? 'Résolu' : 'En attente',
+                'Date résolution': a.resolvedDate ? formatDateFR(a.resolvedDate) : '-',
+                'Résolu par': a.resolvedBy || '-',
+                'Notes': a.notes || '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Signalements");
+            XLSX.writeFile(wb, `BIOCARE-BIOTECH_Signalements_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('success', 'Export réussi', 'Fichier Excel téléchargé');
+        }
+
+        function getTypeIcon(type) {
+            const icons = {
+                missing: '<i class="fas fa-box-open text-orange-400"></i>',
+                outofstock: '<i class="fas fa-times-circle text-rose-400"></i>',
+                expired: '<i class="fas fa-calendar-times text-yellow-400"></i>',
+                damaged: '<i class="fas fa-tools text-violet-400"></i>',
+                other: '<i class="fas fa-question-circle text-cyan-400"></i>'
+            };
+            return icons[type];
+        }
+
+        function getTypeStyle(type) {
+            const styles = {
+                missing: 'bg-orange-500/20',
+                outofstock: 'bg-rose-500/20',
+                expired: 'bg-yellow-500/20',
+                damaged: 'bg-violet-500/20',
+                other: 'bg-cyan-500/20'
+            };
+            return styles[type];
+        }
+
+        function getTypeLabel(type) {
+            const labels = {
+                missing: 'Produit manquant',
+                outofstock: 'Stock épuisé',
+                expired: 'Produit périmé',
+                damaged: 'Matériel endommagé',
+                other: 'Autre problème'
+            };
+            return labels[type];
+        }
+
+        function getUrgencyStyle(urgency) {
+            const styles = {
+                low: 'bg-emerald-500/20 text-emerald-400',
+                medium: 'bg-yellow-500/20 text-yellow-400',
+                high: 'bg-red-500/20 text-red-400'
+            };
+            return styles[urgency];
+        }
+
+        function getUrgencyLabel(urgency) {
+            const labels = {
+                low: 'Basse',
+                medium: 'Moyenne',
+                high: 'Haute'
+            };
+            return labels[urgency];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 5) return "À l'instant";
+            if (minutes < 60) return `Il y a ${minutes} min`;
+            if (hours < 24) return `Il y a ${hours}h`;
+            if (days === 1) return "Hier";
+            if (days < 7) return `Il y a ${days} jours`;
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        function formatDateFR(dateString) {
+            return new Date(dateString).toLocaleDateString('fr-FR');
+        }
+
+        function showToast(type, title, message) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const messageEl = document.getElementById('toast-message');
+
+            const icons = {
+                success: '<i class="fas fa-check text-emerald-400"></i>',
+                error: '<i class="fas fa-exclamation text-red-400"></i>',
+                info: '<i class="fas fa-info text-blue-400"></i>',
+                warning: '<i class="fas fa-exclamation-triangle text-yellow-400"></i>'
+            };
+
+            icon.innerHTML = icons[type] || icons.info;
+            icon.className = `w-8 h-8 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-emerald-500/20' : type === 'error' ? 'bg-red-500/20' : type === 'warning' ? 'bg-yellow-500/20' : 'bg-blue-500/20'}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        document.addEventListener('click', (e) => {
+            const notifCenter = document.getElementById('notification-center');
+            const notifBtn = e.target.closest('button[onclick="toggleNotifications()"]');
+            const profileMenu = document.getElementById('profile-menu');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            
+            if (!notifCenter.contains(e.target) && !notifBtn && !notifCenter.classList.contains('hidden')) {
+                notifCenter.classList.add('hidden');
+            }
+            
+            if (!profileMenu.contains(e.target) && !profileDropdown.classList.contains('hidden')) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAlertModal();
+                closeAdminPanel();
+                closeOwnerModal();
+                document.getElementById('notification-center').classList.add('hidden');
+                document.getElementById('profile-dropdown').classList.add('hidden');
+            }
+        });
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("service-worker.js").catch(err => {
+                    console.log("Service Worker non enregistré:", err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>()
