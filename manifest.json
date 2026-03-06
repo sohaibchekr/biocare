@@ -1,31 +1,10 @@
 {
-  "name": "BIOCARE-BIOTECH - Gestion des Alertes",
+  "name": "BIOCARE-BIOTECH",
   "short_name": "BIOCARE",
-  "description": "Application de gestion des alertes laboratoire de microbiologie",
-  "start_url": "/biocare-biotech/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#06b6d4",
-  "orientation": "portrait",
-  "scope": "/biocare-biotech/",
-  "icons": [
-    {
-      "src": "icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
-    }
-  ]
+  "scope": "/",
+  "icons": [...]
 }
