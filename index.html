@@ -3,27 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Alertes</title>
+    <title>Gestion des Alertes - Laboratoire Microbiologie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
         }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
             border-radius: 1rem;
-            padding: 1.5rem;
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
         }
         .gradient-text {
             background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .creator-badge {
             background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
@@ -31,51 +48,375 @@
             -webkit-text-fill-color: transparent;
             font-weight: 700;
         }
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .sync-online {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .sync-offline {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
     </style>
 </head>
-<body class="text-gray-100 p-4">
-    <div class="max-w-md mx-auto mt-10">
-        <div class="text-center mb-8">
-            <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
-            <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
-                <i class="fas fa-bacteria text-3xl text-white"></i>
-            </div>
-            <h1 class="text-2xl font-bold">
-                <span class="gradient-text">BIOCARE-BIOTECH</span>
-            </h1>
-            <p class="text-gray-400 text-sm">Laboratoire de Microbiologie</p>
-            <div class="mt-4 p-2 bg-green-500/20 text-green-400 rounded-lg">
-                ✅ Version simplifiée - Test
-            </div>
-        </div>
+<body class="text-gray-100">
 
-        <div class="glass-card space-y-4">
-            <h2 class="text-xl font-bold">Créer un compte test</h2>
-            
-            <input type="email" id="test-email" placeholder="Email" 
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-            
-            <input type="password" id="test-password" placeholder="Mot de passe" 
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-            
-            <button onclick="testInscription()" 
-                class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 text-white rounded-xl py-3 font-semibold">
-                TESTER L'INSCRIPTION
+    <!-- Sync Status -->
+    <div id="sync-status" class="sync-status sync-online hidden">
+        <i class="fas fa-cloud mr-2"></i><span>Synchronisé</span>
+    </div>
+
+    <!-- Notification Center -->
+    <div id="notification-center" class="fixed top-20 right-4 w-80 max-h-96 overflow-y-auto glass-card p-4 hidden z-50 border border-white/20">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+            <h3 class="font-bold flex items-center gap-2">
+                <i class="fas fa-bell text-cyan-400"></i>
+                Notifications
+                <span id="notif-count" class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+            </h3>
+            <button onclick="clearAllNotifications()" class="text-xs text-gray-400 hover:text-white">
+                Tout effacer
             </button>
+        </div>
+        <div id="notifications-list" class="space-y-3"></div>
+    </div>
 
-            <div id="resultat" class="mt-4 p-3 bg-white/5 rounded-lg text-sm hidden"></div>
+    <!-- OWNER PASSWORD MODAL -->
+    <div id="owner-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeOwnerModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 w-full max-w-md border-2 border-amber-500/50">
+                <div class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20">
+                    <h2 class="text-xl font-bold text-amber-400">Accès Propriétaire</h2>
+                    <p class="text-xs text-gray-400">SOHAIB CHEKRI</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <input type="password" id="owner-password-input" placeholder="Mot de passe propriétaire"
+                        class="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
+                    <div class="flex gap-3">
+                        <button onclick="closeOwnerModal()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3">
+                            Annuler
+                        </button>
+                        <button onclick="verifyOwnerPassword()" class="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl py-3">
+                            Accéder
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- LOGIN PAGE -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
+                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
+                    <i class="fas fa-bacteria text-3xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold">
+                    <span class="gradient-text">BIOCARE-BIOTECH</span>
+                </h1>
+                <p class="text-gray-400 text-sm">Laboratoire de Microbiologie</p>
+            </div>
+
+            <div id="login-form-container">
+                <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+                    <input type="email" name="email" placeholder="Email professionnel" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                    <input type="password" name="password" placeholder="Mot de passe" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                    <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 text-white rounded-xl py-3.5 font-semibold">
+                        Se connecter
+                    </button>
+                </form>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-400">Première visite ?</p>
+                    <button onclick="showRegister()" class="text-cyan-400 hover:text-cyan-300 font-medium text-sm">
+                        Créer un compte
+                    </button>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <button onclick="openOwnerModal()" class="text-xs text-gray-500 hover:text-amber-400 w-full">
+                        <i class="fas fa-crown text-amber-400"></i>
+                        Connexion Propriétaire
+                    </button>
+                </div>
+            </div>
+
+            <div id="register-form-container" class="hidden">
+                <form id="register-form" class="space-y-4" onsubmit="handleRegister(event)">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" name="firstName" placeholder="Prénom" required
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                        <input type="text" name="lastName" placeholder="Nom" required
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <input type="email" name="email" placeholder="Email" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                    <input type="password" name="password" placeholder="Mot de passe (min. 6)" required minlength="6"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+                    <select name="role" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                        <option value="">Fonction...</option>
+                        <option value="analyste_microbio">Analyste Microbiologie</option>
+                        <option value="responsable_cq">Responsable CQ</option>
+                        <option value="superviseur">Superviseur</option>
+                    </select>
+                    <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl py-3.5 font-semibold">
+                        Créer mon compte
+                    </button>
+                </form>
+                <div class="mt-6 text-center">
+                    <button onclick="showLogin()" class="text-gray-400 hover:text-white">
+                        ← Retour
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden min-h-screen">
+        <!-- Navigation -->
+        <nav class="glass-panel sticky top-0 z-40 border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center space-x-3 cursor-pointer" onclick="showDashboard()">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
+                            <i class="fas fa-bacteria text-white"></i>
+                        </div>
+                        <span class="font-bold gradient-text hidden sm:block">BIOCARE-BIOTECH</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button onclick="openAlertModal()" 
+                            class="bg-gradient-to-r from-red-600 to-orange-600 text-white px-4 py-2 rounded-xl flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="hidden sm:inline">Signaler</span>
+                        </button>
+
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="nav-notif-badge" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                        </button>
+                        
+                        <div class="relative">
+                            <button onclick="toggleProfileMenu()" class="flex items-center gap-3 pl-4 border-l border-white/10">
+                                <div class="text-right hidden sm:block">
+                                    <p class="text-sm font-medium" id="user-name"></p>
+                                    <p class="text-xs text-cyan-400" id="user-role"></p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            </button>
+                            
+                            <div id="profile-dropdown" class="absolute right-0 top-full mt-2 w-48 glass-card hidden overflow-hidden">
+                                <button onclick="showProfile()" class="w-full text-left px-4 py-3 hover:bg-white/10">
+                                    <i class="fas fa-user-cog mr-2"></i>Mon profil
+                                </button>
+                                <button onclick="showDashboard()" class="w-full text-left px-4 py-3 hover:bg-white/10">
+                                    <i class="fas fa-home mr-2"></i>Tableau de bord
+                                </button>
+                                <button onclick="showAdminPanel()" class="w-full text-left px-4 py-3 hover:bg-white/10 text-amber-400">
+                                    <i class="fas fa-crown mr-2"></i>Admin
+                                </button>
+                                <div class="border-t border-white/10"></div>
+                                <button onclick="logout()" class="w-full text-left px-4 py-3 hover:bg-white/10 text-red-400">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard -->
+        <main id="dashboard-section" class="max-w-7xl mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">Tableau de bord</h1>
+                <div class="flex gap-3">
+                    <button onclick="exportToExcel()" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5">
+                        <i class="fas fa-file-excel text-emerald-400 mr-2"></i>Excel
+                    </button>
+                    <select id="filter-type" onchange="loadAlerts()" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                        <option value="all">Tous</option>
+                        <option value="missing">Manquants</option>
+                        <option value="outofstock">Stock épuisé</option>
+                        <option value="expired">Périmés</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-5 gap-4 mb-8">
+                <div class="glass-card p-4 text-center">
+                    <h3 class="text-2xl font-bold" id="stat-total">0</h3>
+                    <p class="text-gray-400 text-xs">Total</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <h3 class="text-2xl font-bold text-orange-400" id="stat-missing">0</h3>
+                    <p class="text-gray-400 text-xs">Manquants</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <h3 class="text-2xl font-bold text-rose-400" id="stat-outofstock">0</h3>
+                    <p class="text-gray-400 text-xs">Stock épuisé</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <h3 class="text-2xl font-bold text-yellow-400" id="stat-expired">0</h3>
+                    <p class="text-gray-400 text-xs">Périmés</p>
+                </div>
+                <div class="glass-card p-4 text-center">
+                    <h3 class="text-2xl font-bold text-emerald-400" id="stat-resolved">0</h3>
+                    <p class="text-gray-400 text-xs">Résolus</p>
+                </div>
+            </div>
+
+            <!-- Alerts Container -->
+            <div id="alerts-container" class="space-y-4"></div>
+        </main>
+
+        <!-- Profile Section -->
+        <main id="profile-section" class="hidden max-w-4xl mx-auto px-4 py-8">
+            <button onclick="showDashboard()" class="mb-4 text-gray-400 hover:text-white">
+                <i class="fas fa-arrow-left mr-2"></i>Retour
+            </button>
+            
+            <div class="glass-card p-6">
+                <h2 class="text-2xl font-bold mb-6">Mon Profil</h2>
+                
+                <form id="profile-form" onsubmit="updateProfile(event)" class="space-y-4 max-w-md">
+                    <input type="text" id="edit-firstname" name="firstName" placeholder="Prénom" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                    <input type="text" id="edit-lastname" name="lastName" placeholder="Nom" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                    <input type="email" id="edit-email" name="email" placeholder="Email" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                    <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-amber-400">Gestion Propriétaire</h2>
+                    <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Inviter un membre -->
+                    <div class="bg-white/5 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">Inviter un membre</h3>
+                        <form id="invite-form" class="grid grid-cols-2 gap-4" onsubmit="inviteUser(event)">
+                            <input type="text" name="firstName" placeholder="Prénom" required
+                                class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                            <input type="text" name="lastName" placeholder="Nom" required
+                                class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                            <input type="email" name="email" placeholder="Email" required
+                                class="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                            <select name="role" required class="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                                <option value="analyste_microbio">Analyste</option>
+                                <option value="responsable_cq">Responsable CQ</option>
+                                <option value="superviseur">Superviseur</option>
+                            </select>
+                            <button type="submit" class="col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-3">
+                                Inviter
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Liste des membres -->
+                    <div class="bg-white/5 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">Membres de l'équipe</h3>
+                        <div id="team-list" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAlertModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 w-full max-w-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Nouveau signalement</h2>
+                
+                <form id="alert-form" onsubmit="submitAlert(event)" class="space-y-4">
+                    <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                        <option value="missing">Produit manquant</option>
+                        <option value="outofstock">Stock épuisé</option>
+                        <option value="expired">Produit périmé</option>
+                        <option value="damaged">Matériel endommagé</option>
+                        <option value="other">Autre</option>
+                    </select>
+
+                    <input type="text" name="productName" placeholder="Nom du produit" required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+
+                    <input type="text" name="reference" placeholder="Référence (optionnel)"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+
+                    <textarea name="notes" placeholder="Description..." rows="3"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3"></textarea>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeAlertModal()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl py-3">
+                            Signaler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="glass-card bg-gray-900 border border-white/10 rounded-xl px-6 py-4">
+            <p id="toast-message" class="text-sm"></p>
+        </div>
+    </div>
+
+    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { 
             getFirestore, 
             collection, 
             addDoc, 
+            getDocs,
+            deleteDoc,
+            updateDoc,
             doc,
-            setDoc,
-            getDocs
+            onSnapshot, 
+            query, 
+            orderBy,
+            where,
+            setDoc
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -89,52 +430,475 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
         window.db = db;
+        window.alerts = [];
+        window.isOnline = navigator.onLine;
 
-        window.testInscription = async function() {
-            const email = document.getElementById('test-email').value;
-            const password = document.getElementById('test-password').value;
-            const resultat = document.getElementById('resultat');
+        // Fonctions Firebase
+        window.getAllUsers = async () => {
+            const snapshot = await getDocs(collection(db, "users"));
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        };
+
+        window.addUserToFirestore = async (userData) => {
+            const q = query(collection(db, "users"), where("email", "==", userData.email));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) throw new Error("EMAIL_EXISTS");
+            await setDoc(doc(db, "users", userData.id.toString()), userData);
+            return userData.id;
+        };
+
+        window.updateUserInFirestore = async (userId, updates) => {
+            await updateDoc(doc(db, "users", userId.toString()), updates);
+        };
+
+        window.deleteUserFromFirestore = async (userId) => {
+            await deleteDoc(doc(db, "users", userId.toString()));
+        };
+
+        window.addAlertToFirestore = async (alertData) => {
+            const docRef = await addDoc(collection(db, "alerts"), alertData);
+            return docRef.id;
+        };
+
+        window.deleteAlertFromFirestore = async (alertId) => {
+            await deleteDoc(doc(db, "alerts", alertId));
+        };
+
+        window.updateAlertInFirestore = async (alertId, updates) => {
+            await updateDoc(doc(db, "alerts", alertId), updates);
+        };
+
+        // Load alerts
+        window.loadAlerts = async () => {
+            const q = query(collection(db, "alerts"), orderBy("date", "desc"));
+            const snapshot = await getDocs(q);
+            window.alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderAlerts();
+            updateStats();
+        };
+
+        // Real-time updates
+        onSnapshot(collection(db, "alerts"), (snapshot) => {
+            window.alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderAlerts();
+            updateStats();
+        });
+    </script>
+
+    <script>
+        // Variables
+        const OWNER_PASSWORD = 'FARAH2025+';
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let notifications = JSON.parse(localStorage.getItem('labNotifications')) || [];
+
+        // Utility Functions
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.textContent = message;
+            msgEl.className = isError ? 'text-sm text-red-400' : 'text-sm text-emerald-400';
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Navigation
+        window.showLogin = function() {
+            document.getElementById('register-form-container').classList.add('hidden');
+            document.getElementById('login-form-container').classList.remove('hidden');
+        };
+
+        window.showRegister = function() {
+            document.getElementById('login-form-container').classList.add('hidden');
+            document.getElementById('register-form-container').classList.remove('hidden');
+        };
+
+        window.showDashboard = function() {
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('profile-section').classList.add('hidden');
+            document.getElementById('profile-dropdown').classList.add('hidden');
+            loadAlerts();
+        };
+
+        window.showProfile = function() {
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('profile-section').classList.remove('hidden');
+            document.getElementById('profile-dropdown').classList.add('hidden');
+            document.getElementById('edit-firstname').value = currentUser.firstName;
+            document.getElementById('edit-lastname').value = currentUser.lastName;
+            document.getElementById('edit-email').value = currentUser.email;
+        };
+
+        window.toggleProfileMenu = function() {
+            document.getElementById('profile-dropdown').classList.toggle('hidden');
+        };
+
+        window.toggleNotifications = function() {
+            const center = document.getElementById('notification-center');
+            center.classList.toggle('hidden');
+            if (!center.classList.contains('hidden')) {
+                renderNotifications();
+            }
+        };
+
+        // Auth Functions
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
             
-            if (!email || !password) {
-                resultat.className = 'mt-4 p-3 bg-red-500/20 text-red-400 rounded-lg';
-                resultat.innerHTML = '❌ Remplissez tous les champs';
-                resultat.classList.remove('hidden');
+            const newUser = {
+                id: Date.now(),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await window.addUserToFirestore(newUser);
+                currentUser = newUser;
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                showToast('Compte créé avec succès !');
+                document.getElementById('register-form-container').classList.add('hidden');
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+                document.getElementById('user-role').textContent = currentUser.role.replace('_', ' ');
+                loadAlerts();
+            } catch (error) {
+                showToast(error.message === "EMAIL_EXISTS" ? 'Email déjà utilisé' : 'Erreur: ' + error.message, true);
+            }
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            try {
+                const users = await window.getAllUsers();
+                const user = users.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    showToast('Connexion réussie !');
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    document.getElementById('user-name').textContent = user.firstName + ' ' + user.lastName;
+                    document.getElementById('user-role').textContent = user.role.replace('_', ' ');
+                    loadAlerts();
+                } else {
+                    showToast('Email ou mot de passe incorrect', true);
+                }
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+            }
+        };
+
+        window.logout = function() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('profile-dropdown').classList.add('hidden');
+            showToast('Déconnecté');
+        };
+
+        window.openOwnerModal = function() {
+            document.getElementById('owner-modal').classList.remove('hidden');
+        };
+
+        window.closeOwnerModal = function() {
+            document.getElementById('owner-modal').classList.add('hidden');
+        };
+
+        window.verifyOwnerPassword = async function() {
+            const password = document.getElementById('owner-password-input').value;
+            if (password === OWNER_PASSWORD) {
+                const owner = {
+                    id: 999999,
+                    firstName: "SOHAIB",
+                    lastName: "CHEKRI",
+                    email: "sohaibchekri@gmail.com",
+                    role: "Propriétaire",
+                    isOwner: true
+                };
+                currentUser = owner;
+                localStorage.setItem('currentUser', JSON.stringify(owner));
+                closeOwnerModal();
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('user-name').textContent = owner.firstName + ' ' + owner.lastName;
+                document.getElementById('user-role').textContent = 'Propriétaire';
+            } else {
+                showToast('Mot de passe incorrect', true);
+            }
+        };
+
+        // Alert Functions
+        window.openAlertModal = function() {
+            document.getElementById('alert-modal').classList.remove('hidden');
+        };
+
+        window.closeAlertModal = function() {
+            document.getElementById('alert-modal').classList.add('hidden');
+            document.getElementById('alert-form').reset();
+        };
+
+        window.submitAlert = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const newAlert = {
+                type: formData.get('type'),
+                productName: formData.get('productName'),
+                reference: formData.get('reference') || '',
+                urgency: 'medium',
+                status: 'pending',
+                reportedBy: {
+                    id: currentUser.id,
+                    firstName: currentUser.firstName,
+                    lastName: currentUser.lastName
+                },
+                date: new Date().toISOString(),
+                notes: formData.get('notes') || ''
+            };
+
+            try {
+                await window.addAlertToFirestore(newAlert);
+                showToast('Signalement créé');
+                closeAlertModal();
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+            }
+        };
+
+        window.renderAlerts = function() {
+            const container = document.getElementById('alerts-container');
+            const filter = document.getElementById('filter-type').value;
+            
+            let filtered = window.alerts;
+            if (filter !== 'all') {
+                filtered = window.alerts.filter(a => a.type === filter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-400">Aucun signalement</div>';
                 return;
             }
 
-            resultat.className = 'mt-4 p-3 bg-yellow-500/20 text-yellow-400 rounded-lg';
-            resultat.innerHTML = '⏳ Test en cours...';
-            resultat.classList.remove('hidden');
+            container.innerHTML = filtered.map(alert => `
+                <div class="glass-card p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">${alert.productName}</h3>
+                            <p class="text-sm text-gray-400">
+                                Signalé par ${alert.reportedBy.firstName} ${alert.reportedBy.lastName}
+                                <br>${formatDate(alert.date)}
+                            </p>
+                            ${alert.notes ? `<p class="text-sm mt-2">${alert.notes}</p>` : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            ${alert.status !== 'resolved' ? `
+                                <button onclick="resolveAlert('${alert.id}')" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-3 py-1 rounded-lg text-sm">
+                                    Résoudre
+                                </button>
+                            ` : ''}
+                            ${currentUser?.isOwner || currentUser?.id === alert.reportedBy.id ? `
+                                <button onclick="deleteAlert('${alert.id}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1 rounded-lg text-sm">
+                                    Supprimer
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        };
 
-            try {
-                const testUser = {
-                    id: Date.now(),
-                    email: email,
-                    firstName: "Test",
-                    lastName: "User",
-                    password: password,
-                    role: "analyste_microbio",
-                    createdAt: new Date().toISOString(),
-                    test: true
-                };
+        window.updateStats = function() {
+            const active = window.alerts.filter(a => a.status !== 'resolved').length;
+            const missing = window.alerts.filter(a => a.type === 'missing' && a.status !== 'resolved').length;
+            const outofstock = window.alerts.filter(a => a.type === 'outofstock' && a.status !== 'resolved').length;
+            const expired = window.alerts.filter(a => a.type === 'expired' && a.status !== 'resolved').length;
+            const resolved = window.alerts.filter(a => a.status === 'resolved').length;
 
-                // Tentative d'écriture directe
-                await setDoc(doc(db, "users", testUser.id.toString()), testUser);
-                
-                resultat.className = 'mt-4 p-3 bg-green-500/20 text-green-400 rounded-lg';
-                resultat.innerHTML = '✅ SUCCÈS ! Utilisateur créé dans Firebase !';
-                
-                // Vérifier la lecture
-                const snapshot = await getDocs(collection(db, "users"));
-                resultat.innerHTML += `<br>📊 Total users: ${snapshot.size}`;
-                
-            } catch (error) {
-                resultat.className = 'mt-4 p-3 bg-red-500/20 text-red-400 rounded-lg';
-                resultat.innerHTML = '❌ ERREUR: ' + error.message;
-                console.error("Erreur complète:", error);
+            document.getElementById('stat-total').textContent = active;
+            document.getElementById('stat-missing').textContent = missing;
+            document.getElementById('stat-outofstock').textContent = outofstock;
+            document.getElementById('stat-expired').textContent = expired;
+            document.getElementById('stat-resolved').textContent = resolved;
+        };
+
+        window.resolveAlert = async function(id) {
+            await window.updateAlertInFirestore(id, { status: 'resolved' });
+            showToast('Signalement résolu');
+        };
+
+        window.deleteAlert = async function(id) {
+            if (confirm('Supprimer ce signalement ?')) {
+                await window.deleteAlertFromFirestore(id);
+                showToast('Signalement supprimé');
             }
         };
+
+        // Admin Functions
+        window.showAdminPanel = async function() {
+            if (!currentUser?.isOwner) {
+                showToast('Accès réservé au propriétaire', true);
+                return;
+            }
+            document.getElementById('admin-panel').classList.remove('hidden');
+            const users = await window.getAllUsers();
+            renderTeamList(users);
+        };
+
+        window.closeAdminPanel = function() {
+            document.getElementById('admin-panel').classList.add('hidden');
+        };
+
+        function renderTeamList(users) {
+            const container = document.getElementById('team-list');
+            container.innerHTML = users.map(user => `
+                <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                    <div>
+                        <p class="font-medium">${user.firstName} ${user.lastName}</p>
+                        <p class="text-sm text-gray-400">${user.email}</p>
+                    </div>
+                    ${!user.isOwner ? `
+                        <button onclick="deleteUser('${user.id}')" class="text-red-400 hover:text-red-300">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        window.inviteUser = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            const newUser = {
+                id: Date.now(),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                password: Math.random().toString(36).slice(-8) + 'A1!',
+                role: formData.get('role'),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await window.addUserToFirestore(newUser);
+                showToast('Utilisateur invité');
+                closeAdminPanel();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        };
+
+        window.deleteUser = async function(userId) {
+            if (confirm('Supprimer cet utilisateur ?')) {
+                await window.deleteUserFromFirestore(userId);
+                showToast('Utilisateur supprimé');
+                closeAdminPanel();
+            }
+        };
+
+        // Profile Functions
+        window.updateProfile = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            const updates = {
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email')
+            };
+
+            try {
+                await window.updateUserInFirestore(currentUser.id, updates);
+                currentUser = { ...currentUser, ...updates };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+                showToast('Profil mis à jour');
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+            }
+        };
+
+        // Notification Functions
+        function renderNotifications() {
+            const list = document.getElementById('notifications-list');
+            if (notifications.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-4">Aucune notification</p>';
+                return;
+            }
+            list.innerHTML = notifications.slice().reverse().map(n => `
+                <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="text-sm">${n.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${formatDate(n.date)}</p>
+                </div>
+            `).join('');
+        }
+
+        window.clearAllNotifications = function() {
+            notifications = [];
+            localStorage.setItem('labNotifications', JSON.stringify(notifications));
+            renderNotifications();
+        };
+
+        // Export
+        window.exportToExcel = function() {
+            const data = window.alerts.map(a => ({
+                Date: formatDate(a.date),
+                Type: a.type,
+                Produit: a.productName,
+                'Signalé par': a.reportedBy.firstName + ' ' + a.reportedBy.lastName,
+                Statut: a.status
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Signalements");
+            XLSX.writeFile(wb, `signalements_${new Date().toISOString().split('T')[0]}.xlsx`);
+        };
+
+        // Check saved session
+        if (currentUser) {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+            document.getElementById('user-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur';
+            loadAlerts();
+        }
+
+        // Click outside dropdown
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#profile-menu')) {
+                document.getElementById('profile-dropdown')?.classList.add('hidden');
+            }
+            if (!e.target.closest('button[onclick="toggleNotifications()"]') && !e.target.closest('#notification-center')) {
+                document.getElementById('notification-center')?.classList.add('hidden');
+            }
+        });
+
+        // Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAlertModal();
+                closeAdminPanel();
+                closeOwnerModal();
+            }
+        });
     </script>
 </body>
 </html>
