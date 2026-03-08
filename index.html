@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Alertes- Laboratoire Microbiologie </title>
+    <title>Gestion des Alertes - Laboratoire Microbiologie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -177,6 +177,7 @@
                             <button 
                                 onclick="toggleOwnerPasswordVisibility()"
                                 class="absolute right-4 top-3.5 text-gray-400 hover:text-white"
+                                type="button"
                             >
                                 <i class="fas fa-eye" id="owner-password-eye"></i>
                             </button>
@@ -215,7 +216,7 @@
                     <i class="fas fa-bacteria text-3xl text-white"></i>
                 </div>
                 <h1 class="text-2xl font-bold mb-2 leading-tight">
-                    <span class="gradient-text"></span>
+                    <span class="gradient-text">BIOCARE-BIOTECH</span>
                 </h1>
                 <p class="text-gray-400 text-sm">Laboratoire de Microbiologie</p>
             </div>
@@ -285,7 +286,7 @@
                         <label class="block text-sm font-medium text-gray-300 mb-2">Email *</label>
                         <input type="email" name="email" required
                             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
-                            placeholder="sohaib.chek@biocare-biotech.com">
+                            placeholder="collègue@biocare-biotech.com">
                     </div>
 
                     <div>
@@ -535,7 +536,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">Fonction</label>
-                                <input type="text" value="Analyste Microbiologie -BIOCARE-BIOTECH" disabled
+                                <input type="text" value="Analyste Microbiologie - BIOCARE-BIOTECH" disabled
                                     class="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2.5 text-amber-400 font-bold cursor-not-allowed">
                             </div>
                             <button type="submit" 
@@ -599,7 +600,7 @@
                         <i class="fas fa-crown text-2xl text-amber-400"></i>
                         <div>
                             <h2 class="text-xl font-bold">Gestion Propriétaire</h2>
-                            <p class="text-xs text-amber-400 uppercase tracking-wider">CREATED By SOHAIB CHEKRI</p>
+                            <p class="text-xs text-amber-400 uppercase tracking-wider">CREATED BY SOHAIB CHEKRI</p>
                         </div>
                     </div>
                     <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white">
@@ -810,7 +811,7 @@
                     <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 flex items-start gap-3">
                         <i class="fas fa-info-circle text-yellow-400 mt-0.5"></i>
                         <p class="text-sm text-yellow-200">
-                            Tous les membres de Laboratoire de contrôle qualité seront notifiés de ce signalement.
+                            Tous les membres du laboratoire seront notifiés de ce signalement.
                         </p>
                     </div>
 
@@ -839,7 +840,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK - Configuration BIOCARE-BIOTECH UNIQUE -->
+    <!-- Firebase SDK - Configuration BIOCARE-BIOTECH -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { 
@@ -853,10 +854,12 @@
             onSnapshot, 
             query, 
             orderBy,
-            Timestamp 
+            Timestamp,
+            setDoc,
+            where
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Configuration BIOCARE-BIOTECH (CORRECTE)
+        // Configuration BIOCARE-BIOTECH
         const firebaseConfig = {
             apiKey: "AIzaSyBSSVxLYLN2hx0hNCkbYwfGl--H8UZFnCw",
             authDomain: "biocare-biotech.firebaseapp.com",
@@ -875,13 +878,14 @@
         // Rendre disponible globalement
         window.db = db;
         window.isOnline = navigator.onLine;
-        window.alerts = []; // Initialiser comme tableau vide, sera rempli par Firestore
+        window.alerts = [];
 
         // Gestionnaire de statut de connexion
         window.addEventListener('online', () => {
             window.isOnline = true;
             updateSyncStatus(true);
             syncPendingAlerts();
+            syncPendingUsers();
         });
         
         window.addEventListener('offline', () => {
@@ -896,10 +900,10 @@
                 statusEl.classList.remove('hidden');
                 if (online) {
                     statusEl.className = 'sync-status sync-online';
-                    textEl.innerHTML = '<i class="fas fa-cloud mr-2"></i>Synchronisé avec BIOCARE-BIOTECH';
+                    textEl.innerHTML = 'Synchronisé avec BIOCARE-BIOTECH';
                 } else {
                     statusEl.className = 'sync-status sync-offline';
-                    textEl.innerHTML = '<i class="fas fa-wifi-slash mr-2"></i>Mode hors-ligne';
+                    textEl.innerHTML = 'Mode hors-ligne';
                 }
             }
         }
@@ -916,14 +920,126 @@
                         syncedAt: Timestamp.now()
                     });
                 } catch (e) {
-                    console.error("Erreur sync:", e);
+                    console.error("Erreur sync alert:", e);
                 }
             }
             localStorage.setItem('pendingAlerts', JSON.stringify([]));
-            showToast('success', 'Synchronisation', `${pending.length} alerte(s) synchronisée(s)`);
+            if (typeof window.showToast === 'function') {
+                window.showToast('success', 'Synchronisation', `${pending.length} alerte(s) synchronisée(s)`);
+            }
         }
 
-        // Fonctions exposées globalement
+        // Synchroniser les utilisateurs en attente
+        async function syncPendingUsers() {
+            const pending = JSON.parse(localStorage.getItem('pendingUsers')) || [];
+            if (pending.length === 0) return;
+            
+            for (const user of pending) {
+                try {
+                    const userRef = doc(usersCollection, user.id.toString());
+                    await setDoc(userRef, {
+                        ...user,
+                        syncedAt: Timestamp.now()
+                    });
+                } catch (e) {
+                    console.error("Erreur sync user:", e);
+                }
+            }
+            localStorage.setItem('pendingUsers', JSON.stringify([]));
+        }
+
+        // FONCTIONS POUR LES UTILISATEURS
+        window.getAllUsers = async () => {
+            try {
+                const snapshot = await getDocs(usersCollection);
+                const users = [];
+                snapshot.forEach((doc) => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+                return users;
+            } catch (error) {
+                console.error("Erreur chargement utilisateurs:", error);
+                return [];
+            }
+        };
+
+        window.addUserToFirestore = async (userData) => {
+            try {
+                // Vérifier si l'email existe déjà
+                const q = query(usersCollection, where("email", "==", userData.email));
+                const snapshot = await getDocs(q);
+                
+                if (!snapshot.empty) {
+                    throw new Error("EMAIL_EXISTS");
+                }
+                
+                // Ajouter l'utilisateur avec un ID personnalisé
+                const userRef = doc(usersCollection, userData.id.toString());
+                await setDoc(userRef, {
+                    ...userData,
+                    createdAt: Timestamp.now()
+                });
+                return userData.id;
+            } catch (error) {
+                console.error("Erreur ajout utilisateur:", error);
+                if (error.message === "EMAIL_EXISTS") {
+                    throw error;
+                }
+                // Sauvegarder en local pour synchronisation ultérieure
+                const pending = JSON.parse(localStorage.getItem('pendingUsers')) || [];
+                pending.push(userData);
+                localStorage.setItem('pendingUsers', JSON.stringify(pending));
+                throw new Error("OFFLINE_MODE");
+            }
+        };
+
+        window.updateUserInFirestore = async (userId, updates) => {
+            try {
+                await updateDoc(doc(usersCollection, userId.toString()), updates);
+            } catch (error) {
+                console.error("Erreur mise à jour utilisateur:", error);
+                throw error;
+            }
+        };
+
+        window.deleteUserFromFirestore = async (userId) => {
+            try {
+                await deleteDoc(doc(usersCollection, userId.toString()));
+            } catch (error) {
+                console.error("Erreur suppression utilisateur:", error);
+                throw error;
+            }
+        };
+
+        window.findUserByEmail = async (email) => {
+            try {
+                const q = query(usersCollection, where("email", "==", email));
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    return { id: doc.id, ...doc.data() };
+                }
+                return null;
+            } catch (error) {
+                console.error("Erreur recherche utilisateur:", error);
+                return null;
+            }
+        };
+
+        window.setupRealtimeUsers = (callback) => {
+            const q = query(usersCollection, orderBy("createdAt", "desc"));
+            return onSnapshot(q, (snapshot) => {
+                const users = [];
+                snapshot.forEach((doc) => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+                if (callback) callback(users);
+            }, (error) => {
+                console.error("Erreur temps réel utilisateurs:", error);
+            });
+        };
+
+        // Fonctions pour les alertes
         window.addAlertToFirestore = async (alertData) => {
             try {
                 const docRef = await addDoc(alertsCollection, {
@@ -965,22 +1081,20 @@
                 snapshot.forEach((doc) => {
                     alertsData.push({ id: doc.id, ...doc.data() });
                 });
-                window.alerts = alertsData; // Mettre à jour window.alerts avec les données Firestore
+                window.alerts = alertsData;
                 localStorage.setItem('labAlerts', JSON.stringify(alertsData));
                 
-                // Appeler renderAlerts et updateStats APRÈS avoir mis à jour window.alerts
-                if (typeof renderAlerts === 'function') renderAlerts();
-                if (typeof updateStats === 'function') updateStats();
+                if (typeof window.renderAlerts === 'function') window.renderAlerts();
+                if (typeof window.updateStats === 'function') window.updateStats();
                 
                 updateSyncStatus(true);
                 console.log("Données synchronisées:", alertsData.length, "alertes");
             }, (error) => {
                 console.error("Erreur temps réel:", error);
                 updateSyncStatus(false);
-                // Fallback sur localStorage
                 window.alerts = JSON.parse(localStorage.getItem('labAlerts')) || [];
-                if (typeof renderAlerts === 'function') renderAlerts();
-                if (typeof updateStats === 'function') updateStats();
+                if (typeof window.renderAlerts === 'function') window.renderAlerts();
+                if (typeof window.updateStats === 'function') window.updateStats();
             });
         };
 
@@ -992,7 +1106,7 @@
                 snapshot.forEach((doc) => {
                     alertsData.push({ id: doc.id, ...doc.data() });
                 });
-                window.alerts = alertsData; // Mettre à jour window.alerts
+                window.alerts = alertsData;
                 localStorage.setItem('labAlerts', JSON.stringify(alertsData));
                 updateSyncStatus(true);
                 console.log("Données chargées:", alertsData.length, "alertes");
@@ -1000,6 +1114,21 @@
                 console.error("Erreur chargement:", error);
                 updateSyncStatus(false);
                 window.alerts = JSON.parse(localStorage.getItem('labAlerts')) || [];
+            }
+        };
+
+        // Charger les utilisateurs au démarrage
+        window.loadUsersFromFirestore = async () => {
+            try {
+                const users = await window.getAllUsers();
+                if (users.length > 0) {
+                    localStorage.setItem('labUsers', JSON.stringify(users));
+                    return users;
+                }
+                return JSON.parse(localStorage.getItem('labUsers')) || [];
+            } catch (error) {
+                console.error("Erreur chargement utilisateurs:", error);
+                return JSON.parse(localStorage.getItem('labUsers')) || [];
             }
         };
 
@@ -1017,29 +1146,65 @@
             { id: 'superviseur', label: 'Superviseur microbiologie', color: 'red' }
         ];
 
-        let users = JSON.parse(localStorage.getItem('labUsers')) || [
-            {
-                id: 999999,
-                firstName: "SOHAIB",
-                lastName: "CHEKRI",
-                email: "sohaibchekri@gmail.com",
-                password: "FARAH2025+",
-                role: "analyste_microbio",
-                isOwner: true,
-                createdBy: 'system',
-                createdAt: new Date().toISOString()
-            }
-        ];
-
-        // NE PAS initialiser alerts ici - il est déjà initialisé dans le module Firebase
-        // let alerts = [];  <- SUPPRIMÉ
-        
+        let users = [];
         let notifications = JSON.parse(localStorage.getItem('labNotifications')) || [];
-        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let currentUser = null;
         let lastInvitedCredentials = null;
+
+        // Rendre showToast disponible globalement
+        window.showToast = function(type, title, message) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const messageEl = document.getElementById('toast-message');
+
+            const icons = {
+                success: '<i class="fas fa-check text-emerald-400"></i>',
+                error: '<i class="fas fa-exclamation text-red-400"></i>',
+                info: '<i class="fas fa-info text-blue-400"></i>',
+                warning: '<i class="fas fa-exclamation-triangle text-yellow-400"></i>'
+            };
+
+            icon.innerHTML = icons[type] || icons.info;
+            icon.className = `w-8 h-8 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-emerald-500/20' : type === 'error' ? 'bg-red-500/20' : type === 'warning' ? 'bg-yellow-500/20' : 'bg-blue-500/20'}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        };
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', async () => {
+            // Charger les utilisateurs depuis Firestore
+            users = await window.loadUsersFromFirestore();
+            
+            // Vérifier si currentUser existe dans localStorage
+            const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (savedUser) {
+                // Vérifier si l'utilisateur existe toujours dans la liste
+                currentUser = users.find(u => u.id == savedUser.id) || savedUser;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+            
+            // Configurer l'écoute en temps réel des utilisateurs
+            window.setupRealtimeUsers((updatedUsers) => {
+                users = updatedUsers;
+                localStorage.setItem('labUsers', JSON.stringify(updatedUsers));
+                if (currentUser) {
+                    const updatedCurrentUser = users.find(u => u.id == currentUser.id);
+                    if (updatedCurrentUser) {
+                        currentUser = updatedCurrentUser;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
+                }
+                if (!document.getElementById('admin-panel').classList.contains('hidden')) {
+                    renderTeamList();
+                }
+            });
+            
             loadRoles();
             if (currentUser) {
                 await showMainApp();
@@ -1070,13 +1235,26 @@
             document.getElementById('login-form-container').classList.remove('hidden');
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const email = formData.get('email');
             const password = formData.get('password');
 
-            const user = users.find(u => u.email === email && u.password === password);
+            // Chercher dans users (déjà synchronisé)
+            let user = users.find(u => u.email === email && u.password === password);
+            
+            // Si pas trouvé et en ligne, chercher dans Firestore directement
+            if (!user && window.isOnline) {
+                user = await window.findUserByEmail(email);
+                if (user && user.password === password) {
+                    // Ajouter à la liste locale
+                    users.push(user);
+                    localStorage.setItem('labUsers', JSON.stringify(users));
+                } else {
+                    user = null;
+                }
+            }
             
             if (user) {
                 currentUser = user;
@@ -1133,8 +1311,8 @@
             proceedWithOwnerLogin();
         }
 
-        function proceedWithOwnerLogin() {
-            const owner = users.find(u => u.isOwner) || users.find(u => u.email === 'sohaibchekri@gmail.com');
+        async function proceedWithOwnerLogin() {
+            let owner = users.find(u => u.isOwner) || users.find(u => u.email === 'sohaibchekri@gmail.com');
             
             if (owner) {
                 currentUser = owner;
@@ -1153,19 +1331,35 @@
                     createdBy: 'system',
                     createdAt: new Date().toISOString()
                 };
-                users.push(newOwner);
-                localStorage.setItem('labUsers', JSON.stringify(users));
-                currentUser = newOwner;
-                localStorage.setItem('currentUser', JSON.stringify(newOwner));
-                showToast('success', 'Compte propriétaire créé', 'Bienvenue SOHAIB CHEKRI ');
-                setTimeout(showMainApp, 500);
+                
+                try {
+                    if (window.isOnline) {
+                        await window.addUserToFirestore(newOwner);
+                        showToast('success', 'Compte créé', 'Synchronisé avec le cloud');
+                    } else {
+                        showToast('warning', 'Mode hors-ligne', 'Compte sauvegardé localement');
+                    }
+                    users.push(newOwner);
+                    localStorage.setItem('labUsers', JSON.stringify(users));
+                    currentUser = newOwner;
+                    localStorage.setItem('currentUser', JSON.stringify(newOwner));
+                    setTimeout(showMainApp, 500);
+                } catch (error) {
+                    if (error.message === "EMAIL_EXISTS") {
+                        showToast('error', 'Erreur', 'Email déjà utilisé');
+                    } else {
+                        console.error("Erreur création propriétaire:", error);
+                        showToast('error', 'Erreur', 'Impossible de créer le compte propriétaire');
+                    }
+                }
             }
         }
 
-        function handleRegister(e) {
+        async function handleRegister(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             
+            // Vérifier si l'email existe déjà localement
             if (users.find(u => u.email === formData.get('email'))) {
                 showToast('error', 'Erreur', 'Cet email est déjà utilisé');
                 return;
@@ -1183,14 +1377,37 @@
                 createdAt: new Date().toISOString()
             };
 
-            users.push(newUser);
-            localStorage.setItem('labUsers', JSON.stringify(users));
-            
-            currentUser = newUser;
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
-            
-            showToast('success', 'Compte créé', `Bienvenue ${newUser.firstName} !`);
-            setTimeout(showMainApp, 500);
+            try {
+                if (window.isOnline) {
+                    await window.addUserToFirestore(newUser);
+                    showToast('success', 'Compte créé', 'Synchronisé avec le cloud');
+                } else {
+                    showToast('warning', 'Mode hors-ligne', 'Compte sauvegardé localement');
+                }
+                
+                users.push(newUser);
+                localStorage.setItem('labUsers', JSON.stringify(users));
+                
+                currentUser = newUser;
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                
+                setTimeout(showMainApp, 500);
+            } catch (error) {
+                if (error.message === "EMAIL_EXISTS") {
+                    showToast('error', 'Erreur', 'Cet email est déjà utilisé en ligne');
+                } else if (error.message === "OFFLINE_MODE") {
+                    // Mode hors-ligne - on garde quand même le compte en local
+                    users.push(newUser);
+                    localStorage.setItem('labUsers', JSON.stringify(users));
+                    currentUser = newUser;
+                    localStorage.setItem('currentUser', JSON.stringify(newUser));
+                    showToast('warning', 'Mode hors-ligne', 'Compte créé localement');
+                    setTimeout(showMainApp, 500);
+                } else {
+                    console.error("Erreur création compte:", error);
+                    showToast('error', 'Erreur', 'Impossible de créer le compte');
+                }
+            }
         }
 
         function logout() {
@@ -1206,15 +1423,15 @@
             document.getElementById('main-app').classList.remove('hidden');
             
             // Charger les alertes depuis Firestore d'abord
-            if (typeof loadAlertsFromFirestore === 'function') {
-                await loadAlertsFromFirestore();
+            if (typeof window.loadAlertsFromFirestore === 'function') {
+                await window.loadAlertsFromFirestore();
             }
             
             showDashboard();
             
             // Activer le temps réel APRÈS avoir affiché le dashboard
-            if (typeof setupRealtimeAlerts === 'function') {
-                setupRealtimeAlerts();
+            if (typeof window.setupRealtimeAlerts === 'function') {
+                window.setupRealtimeAlerts();
             }
         }
 
@@ -1238,9 +1455,8 @@
             
             document.getElementById('user-name').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
             
-            // Utiliser window.alerts qui est maintenu par Firestore
-            renderAlerts();
-            updateStats();
+            window.renderAlerts();
+            window.updateStats();
             updateNotificationBadge();
             renderNotifications();
         }
@@ -1274,8 +1490,7 @@
 
         function renderMyAlerts() {
             const container = document.getElementById('my-alerts-list');
-            // Utiliser window.alerts
-            const myAlerts = window.alerts.filter(a => a.reportedBy && a.reportedBy.id === currentUser.id);
+            const myAlerts = window.alerts.filter(a => a.reportedBy && a.reportedBy.id == currentUser.id);
             
             if (myAlerts.length === 0) {
                 container.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">Vous n\'avez pas encore fait de signalements</p>';
@@ -1300,18 +1515,19 @@
             `).join('');
         }
 
-        function updateProfile(e) {
+        async function updateProfile(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             
-            const emailExists = users.find(u => u.email === formData.get('email') && u.id !== currentUser.id);
+            const emailExists = users.find(u => u.email === formData.get('email') && u.id != currentUser.id);
             if (emailExists) {
                 showToast('error', 'Erreur', 'Cet email est déjà utilisé par un autre membre');
                 return;
             }
 
-            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            const userIndex = users.findIndex(u => u.id == currentUser.id);
             if (userIndex !== -1) {
+                const oldData = { ...users[userIndex] };
                 users[userIndex].firstName = formData.get('firstName');
                 users[userIndex].lastName = formData.get('lastName');
                 users[userIndex].email = formData.get('email');
@@ -1320,14 +1536,29 @@
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 localStorage.setItem('labUsers', JSON.stringify(users));
                 
+                // Mettre à jour dans Firestore si en ligne
+                if (window.isOnline) {
+                    try {
+                        await window.updateUserInFirestore(currentUser.id, {
+                            firstName: currentUser.firstName,
+                            lastName: currentUser.lastName,
+                            email: currentUser.email
+                        });
+                        showToast('success', 'Profil mis à jour', 'Synchronisé avec le cloud');
+                    } catch (error) {
+                        console.error("Erreur mise à jour en ligne:", error);
+                        showToast('warning', 'Attention', 'Modifications sauvegardées localement uniquement');
+                    }
+                } else {
+                    showToast('warning', 'Mode hors-ligne', 'Modifications sauvegardées localement');
+                }
+                
                 document.getElementById('user-name').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
                 loadProfileData();
-                
-                showToast('success', 'Profil mis à jour', 'Vos informations ont été enregistrées');
             }
         }
 
-        function changePassword(e) {
+        async function changePassword(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const currentPassword = formData.get('currentPassword');
@@ -1344,7 +1575,7 @@
                 return;
             }
 
-            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            const userIndex = users.findIndex(u => u.id == currentUser.id);
             if (userIndex !== -1) {
                 users[userIndex].password = newPassword;
                 delete users[userIndex].isTempPassword;
@@ -1353,10 +1584,24 @@
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 localStorage.setItem('labUsers', JSON.stringify(users));
                 
+                // Mettre à jour dans Firestore si en ligne
+                if (window.isOnline) {
+                    try {
+                        await window.updateUserInFirestore(currentUser.id, {
+                            password: newPassword,
+                            isTempPassword: false
+                        });
+                        showToast('success', 'Mot de passe changé', 'Synchronisé avec le cloud');
+                    } catch (error) {
+                        console.error("Erreur mise à jour mot de passe:", error);
+                        showToast('warning', 'Attention', 'Mot de passe modifié localement uniquement');
+                    }
+                } else {
+                    showToast('warning', 'Mode hors-ligne', 'Mot de passe modifié localement');
+                }
+                
                 document.getElementById('password-form').reset();
                 document.getElementById('password-strength').style.width = '0';
-                
-                showToast('success', 'Mot de passe changé', 'Votre mot de passe a été mis à jour avec succès');
             }
         }
 
@@ -1376,10 +1621,16 @@
             const widths = ['20%', '40%', '60%', '80%', '100%'];
             const texts = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
 
-            strengthBar.className = `h-full transition-all duration-300 ${colors[strength - 1] || 'bg-red-500'}`;
-            strengthBar.style.width = widths[strength - 1] || '10%';
-            hint.textContent = texts[strength - 1] || 'Trop court';
-            hint.className = `text-xs mt-1 ${strength >= 3 ? 'text-emerald-400' : 'text-gray-500'}`;
+            if (strength > 0) {
+                strengthBar.className = `h-full transition-all duration-300 ${colors[strength - 1]}`;
+                strengthBar.style.width = widths[strength - 1];
+                hint.textContent = texts[strength - 1];
+                hint.className = `text-xs mt-1 ${strength >= 3 ? 'text-emerald-400' : 'text-gray-500'}`;
+            } else {
+                strengthBar.style.width = '0';
+                hint.textContent = 'Trop court';
+                hint.className = 'text-xs mt-1 text-gray-500';
+            }
         }
 
         function showAdminPanel() {
@@ -1399,7 +1650,7 @@
             document.getElementById('invite-form').reset();
         }
 
-        function inviteUser(e) {
+        async function inviteUser(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const email = formData.get('email');
@@ -1424,27 +1675,53 @@
                 isTempPassword: true
             };
 
-            users.push(newUser);
-            localStorage.setItem('labUsers', JSON.stringify(users));
-            
-            lastInvitedCredentials = { email, password: tempPassword };
-            document.getElementById('invited-email').textContent = email;
-            document.getElementById('invited-password').textContent = tempPassword;
-            document.getElementById('invite-success').classList.remove('hidden');
-            
-            renderTeamList();
-            
-            addNotification(
-                'Nouveau membre',
-                `${newUser.firstName} ${newUser.lastName} a rejoint l'équipe BIOCARE-BIOTECH`,
-                'system',
-                'fa-user-plus'
-            );
+            try {
+                if (window.isOnline) {
+                    await window.addUserToFirestore(newUser);
+                    showToast('success', 'Invitation envoyée', 'Compte créé en ligne');
+                } else {
+                    showToast('warning', 'Mode hors-ligne', 'Compte sauvegardé localement');
+                }
+                
+                users.push(newUser);
+                localStorage.setItem('labUsers', JSON.stringify(users));
+                
+                lastInvitedCredentials = { email, password: tempPassword };
+                document.getElementById('invited-email').textContent = email;
+                document.getElementById('invited-password').textContent = tempPassword;
+                document.getElementById('invite-success').classList.remove('hidden');
+                
+                renderTeamList();
+                
+                addNotification(
+                    'Nouveau membre',
+                    `${newUser.firstName} ${newUser.lastName} a rejoint l'équipe BIOCARE-BIOTECH`,
+                    'system',
+                    'fa-user-plus'
+                );
+            } catch (error) {
+                if (error.message === "EMAIL_EXISTS") {
+                    showToast('error', 'Erreur', 'Cet email est déjà utilisé en ligne');
+                } else if (error.message === "OFFLINE_MODE") {
+                    // Mode hors-ligne - on garde quand même
+                    users.push(newUser);
+                    localStorage.setItem('labUsers', JSON.stringify(users));
+                    lastInvitedCredentials = { email, password: tempPassword };
+                    document.getElementById('invited-email').textContent = email;
+                    document.getElementById('invited-password').textContent = tempPassword;
+                    document.getElementById('invite-success').classList.remove('hidden');
+                    renderTeamList();
+                    showToast('warning', 'Mode hors-ligne', 'Compte créé localement');
+                } else {
+                    console.error("Erreur invitation:", error);
+                    showToast('error', 'Erreur', "Impossible d'inviter l'utilisateur");
+                }
+            }
         }
 
         function copyCredentials() {
             if (!lastInvitedCredentials) return;
-            const text = `Voici vos identifiants pour BIOCARE-BIOTECH (créé par SOHAIB CHEKRI) :\nEmail: ${lastInvitedCredentials.email}\nMot de passe: ${lastInvitedCredentials.password}\n\nConnectez-vous sur la plateforme et changez votre mot de passe.`;
+            const text = `Voici vos identifiants pour BIOCARE-BIOTECH :\nEmail: ${lastInvitedCredentials.email}\nMot de passe: ${lastInvitedCredentials.password}\n\nConnectez-vous sur la plateforme et changez votre mot de passe.`;
             navigator.clipboard.writeText(text).then(() => {
                 showToast('success', 'Copié', 'Identifiants copiés dans le presse-papiers');
             });
@@ -1509,7 +1786,7 @@
             
             tbody.innerHTML = users.map(user => {
                 const roleLabel = availableRoles.find(r => r.id === user.role)?.label || user.role;
-                const isCurrentUser = user.id === currentUser.id;
+                const isCurrentUser = user.id == currentUser.id;
                 const isOwner = user.isOwner;
                 
                 return `
@@ -1535,13 +1812,24 @@
             }).join('');
         }
 
-        function deleteUser(userId) {
+        async function deleteUser(userId) {
             if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return;
             
-            users = users.filter(u => u.id !== userId);
+            if (window.isOnline) {
+                try {
+                    await window.deleteUserFromFirestore(userId);
+                    showToast('success', 'Membre supprimé', 'Synchronisé avec le cloud');
+                } catch (error) {
+                    console.error("Erreur suppression en ligne:", error);
+                    showToast('warning', 'Attention', 'Suppression locale uniquement');
+                }
+            } else {
+                showToast('warning', 'Mode hors-ligne', 'Suppression locale uniquement');
+            }
+            
+            users = users.filter(u => u.id != userId);
             localStorage.setItem('labUsers', JSON.stringify(users));
             renderTeamList();
-            showToast('success', 'Membre supprimé');
         }
 
         function toggleNotifications() {
@@ -1672,7 +1960,7 @@
         }
 
         function toggleExpiryField() {
-            const type = document.querySelector('input[name="type"]:checked').value;
+            const type = document.querySelector('input[name="type"]:checked')?.value;
             const expiryField = document.getElementById('expiry-field');
             if (type === 'expired') {
                 expiryField.classList.remove('hidden');
@@ -1703,15 +1991,11 @@
             };
 
             try {
-                // Essayer d'ajouter à Firestore
-                if (typeof addAlertToFirestore === 'function' && window.isOnline) {
-                    const docId = await addAlertToFirestore(newAlert);
+                if (typeof window.addAlertToFirestore === 'function' && window.isOnline) {
+                    const docId = await window.addAlertToFirestore(newAlert);
                     newAlert.id = docId;
-                    // Ajouter à window.alerts immédiatement pour l'affichage
-                    window.alerts.unshift(newAlert);
                     showToast('success', 'Signalement créé', 'Synchronisé avec le cloud');
                 } else {
-                    // Mode offline
                     newAlert.id = Date.now().toString();
                     window.alerts.unshift(newAlert);
                     localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
@@ -1720,26 +2004,24 @@
                 
                 notifyAllMembers(newAlert, 'new');
                 closeAlertModal();
-                renderAlerts();
-                updateStats();
+                window.renderAlerts();
+                window.updateStats();
             } catch (error) {
                 console.error("Erreur:", error);
-                // Fallback local
                 newAlert.id = Date.now().toString();
                 window.alerts.unshift(newAlert);
                 localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
                 showToast('warning', 'Erreur de sync', 'Sauvegarde locale uniquement');
                 closeAlertModal();
-                renderAlerts();
-                updateStats();
+                window.renderAlerts();
+                window.updateStats();
             }
         }
 
-        function renderAlerts() {
+        window.renderAlerts = function() {
             const container = document.getElementById('alerts-container');
             const filter = document.getElementById('filter-type').value;
             
-            // Utiliser window.alerts au lieu de alerts
             let filtered = window.alerts.filter(a => filter === 'all' || a.type === filter);
             
             if (filtered.length === 0) {
@@ -1747,7 +2029,7 @@
                     <div class="text-center py-12 text-gray-400">
                         <i class="fas fa-check-circle text-5xl mb-4 text-emerald-500/50"></i>
                         <p class="text-lg">Aucun signalement actif</p>
-                        <p class="text-sm"> </p>
+                        <p class="text-sm">Tout est en ordre</p>
                     </div>
                 `;
                 return;
@@ -1820,7 +2102,7 @@
                                 </button>
                             `}
                             
-                            ${currentUser.isOwner || currentUser.id === alert.reportedBy.id ? `
+                            ${currentUser.isOwner || currentUser.id == alert.reportedBy.id ? `
                                 <button onclick="deleteAlert('${alert.id}')" 
                                     class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2">
                                     <i class="fas fa-trash"></i>
@@ -1831,7 +2113,7 @@
                     </div>
                 </div>
             `).join('');
-        }
+        };
 
         function getRoleLabel(roleId) {
             return availableRoles.find(r => r.id === roleId)?.label || roleId;
@@ -1845,8 +2127,8 @@
                 alert.resolvedDate = new Date().toISOString();
                 
                 try {
-                    if (typeof updateAlertInFirestore === 'function' && window.isOnline) {
-                        await updateAlertInFirestore(id, {
+                    if (typeof window.updateAlertInFirestore === 'function' && window.isOnline) {
+                        await window.updateAlertInFirestore(id, {
                             status: 'resolved',
                             resolvedBy: alert.resolvedBy,
                             resolvedDate: alert.resolvedDate
@@ -1858,8 +2140,8 @@
                 
                 localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
                 notifyAllMembers(alert, 'resolved');
-                renderAlerts();
-                updateStats();
+                window.renderAlerts();
+                window.updateStats();
             }
         }
 
@@ -1871,8 +2153,8 @@
                 delete alert.resolvedDate;
                 
                 try {
-                    if (typeof updateAlertInFirestore === 'function' && window.isOnline) {
-                        await updateAlertInFirestore(id, {
+                    if (typeof window.updateAlertInFirestore === 'function' && window.isOnline) {
+                        await window.updateAlertInFirestore(id, {
                             status: 'pending',
                             resolvedBy: null,
                             resolvedDate: null
@@ -1889,8 +2171,8 @@
                     'status_change',
                     'fa-undo'
                 );
-                renderAlerts();
-                updateStats();
+                window.renderAlerts();
+                window.updateStats();
             }
         }
 
@@ -1899,8 +2181,8 @@
                 const alert = window.alerts.find(a => a.id == id);
                 
                 try {
-                    if (typeof deleteAlertFromFirestore === 'function' && window.isOnline) {
-                        await deleteAlertFromFirestore(id);
+                    if (typeof window.deleteAlertFromFirestore === 'function' && window.isOnline) {
+                        await window.deleteAlertFromFirestore(id);
                     }
                 } catch (e) {
                     console.log("Suppression locale uniquement");
@@ -1909,13 +2191,12 @@
                 window.alerts = window.alerts.filter(a => a.id != id);
                 localStorage.setItem('labAlerts', JSON.stringify(window.alerts));
                 notifyAllMembers(alert, 'deleted');
-                renderAlerts();
-                updateStats();
+                window.renderAlerts();
+                window.updateStats();
             }
         }
 
-        function updateStats() {
-            // Utiliser window.alerts
+        window.updateStats = function() {
             const active = window.alerts.filter(a => a.status !== 'resolved').length;
             const missing = window.alerts.filter(a => a.type === 'missing' && a.status !== 'resolved').length;
             const outofstock = window.alerts.filter(a => a.type === 'outofstock' && a.status !== 'resolved').length;
@@ -1932,10 +2213,9 @@
             document.getElementById('stat-outofstock').textContent = outofstock;
             document.getElementById('stat-expired').textContent = expired;
             document.getElementById('stat-resolved').textContent = resolvedThisMonth;
-        }
+        };
 
         function exportToExcel() {
-            // Utiliser window.alerts
             const data = window.alerts.map(a => ({
                 'Date': formatDateFR(a.date),
                 'Type': getTypeLabel(a.type),
@@ -2028,41 +2308,17 @@
             return new Date(dateString).toLocaleDateString('fr-FR');
         }
 
-        function showToast(type, title, message) {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const titleEl = document.getElementById('toast-title');
-            const messageEl = document.getElementById('toast-message');
-
-            const icons = {
-                success: '<i class="fas fa-check text-emerald-400"></i>',
-                error: '<i class="fas fa-exclamation text-red-400"></i>',
-                info: '<i class="fas fa-info text-blue-400"></i>',
-                warning: '<i class="fas fa-exclamation-triangle text-yellow-400"></i>'
-            };
-
-            icon.innerHTML = icons[type] || icons.info;
-            icon.className = `w-8 h-8 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-emerald-500/20' : type === 'error' ? 'bg-red-500/20' : type === 'warning' ? 'bg-yellow-500/20' : 'bg-blue-500/20'}`;
-            titleEl.textContent = title;
-            messageEl.textContent = message;
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-
         document.addEventListener('click', (e) => {
             const notifCenter = document.getElementById('notification-center');
             const notifBtn = e.target.closest('button[onclick="toggleNotifications()"]');
             const profileMenu = document.getElementById('profile-menu');
             const profileDropdown = document.getElementById('profile-dropdown');
             
-            if (!notifCenter.contains(e.target) && !notifBtn && !notifCenter.classList.contains('hidden')) {
+            if (notifCenter && !notifCenter.contains(e.target) && !notifBtn && !notifCenter.classList.contains('hidden')) {
                 notifCenter.classList.add('hidden');
             }
             
-            if (!profileMenu.contains(e.target) && !profileDropdown.classList.contains('hidden')) {
+            if (profileMenu && !profileMenu.contains(e.target) && profileDropdown && !profileDropdown.classList.contains('hidden')) {
                 profileDropdown.classList.add('hidden');
             }
         });
@@ -2072,8 +2328,10 @@
                 closeAlertModal();
                 closeAdminPanel();
                 closeOwnerModal();
-                document.getElementById('notification-center').classList.add('hidden');
-                document.getElementById('profile-dropdown').classList.add('hidden');
+                const notifCenter = document.getElementById('notification-center');
+                const profileDropdown = document.getElementById('profile-dropdown');
+                if (notifCenter) notifCenter.classList.add('hidden');
+                if (profileDropdown) profileDropdown.classList.add('hidden');
             }
         });
 
@@ -2086,4 +2344,4 @@
         }
     </script>
 </body>
-</html>()
+</html>
