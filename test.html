@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Alertes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .creator-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="text-gray-100 p-4">
+    <div class="max-w-md mx-auto mt-10">
+        <div class="text-center mb-8">
+            <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
+                <i class="fas fa-bacteria text-3xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold">
+                <span class="gradient-text">BIOCARE-BIOTECH</span>
+            </h1>
+            <p class="text-gray-400 text-sm">Laboratoire de Microbiologie</p>
+            <div class="mt-4 p-2 bg-green-500/20 text-green-400 rounded-lg">
+                ✅ Version simplifiée - Test
+            </div>
+        </div>
+
+        <div class="glass-card space-y-4">
+            <h2 class="text-xl font-bold">Créer un compte test</h2>
+            
+            <input type="email" id="test-email" placeholder="Email" 
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            
+            <input type="password" id="test-password" placeholder="Mot de passe" 
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            
+            <button onclick="testInscription()" 
+                class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 text-white rounded-xl py-3 font-semibold">
+                TESTER L'INSCRIPTION
+            </button>
+
+            <div id="resultat" class="mt-4 p-3 bg-white/5 rounded-lg text-sm hidden"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            doc,
+            setDoc,
+            getDocs
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSSVxLYLN2hx0hNCkbYwfGl--H8UZFnCw",
+            authDomain: "biocare-biotech.firebaseapp.com",
+            projectId: "biocare-biotech",
+            storageBucket: "biocare-biotech.firebasestorage.app",
+            messagingSenderId: "136143925673",
+            appId: "1:136143925673:web:8c2b51a2bdbee662e594b8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db;
+
+        window.testInscription = async function() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            const resultat = document.getElementById('resultat');
+            
+            if (!email || !password) {
+                resultat.className = 'mt-4 p-3 bg-red-500/20 text-red-400 rounded-lg';
+                resultat.innerHTML = '❌ Remplissez tous les champs';
+                resultat.classList.remove('hidden');
+                return;
+            }
+
+            resultat.className = 'mt-4 p-3 bg-yellow-500/20 text-yellow-400 rounded-lg';
+            resultat.innerHTML = '⏳ Test en cours...';
+            resultat.classList.remove('hidden');
+
+            try {
+                const testUser = {
+                    id: Date.now(),
+                    email: email,
+                    firstName: "Test",
+                    lastName: "User",
+                    password: password,
+                    role: "analyste_microbio",
+                    createdAt: new Date().toISOString(),
+                    test: true
+                };
+
+                // Tentative d'écriture directe
+                await setDoc(doc(db, "users", testUser.id.toString()), testUser);
+                
+                resultat.className = 'mt-4 p-3 bg-green-500/20 text-green-400 rounded-lg';
+                resultat.innerHTML = '✅ SUCCÈS ! Utilisateur créé dans Firebase !';
+                
+                // Vérifier la lecture
+                const snapshot = await getDocs(collection(db, "users"));
+                resultat.innerHTML += `<br>📊 Total users: ${snapshot.size}`;
+                
+            } catch (error) {
+                resultat.className = 'mt-4 p-3 bg-red-500/20 text-red-400 rounded-lg';
+                resultat.innerHTML = '❌ ERREUR: ' + error.message;
+                console.error("Erreur complète:", error);
+            }
+        };
+    </script>
+</body>
+</html>
