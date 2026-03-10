@@ -1,24 +1,95 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Alertes - Laboratoire Microbiologie</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS pour Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-color: #0b0f19;
+            color: #f3f4f6;
             min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            /* Ensure body content is above pseudo-elements */
+            overflow-x: hidden;
         }
+
+        /* Animated Mesh Gradient Orbs */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            width: 60vw;
+            height: 60vw;
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: floatOrb 20s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
+
+        body::before {
+            background: rgba(6, 182, 212, 0.4);
+            /* Cyan orb */
+            top: -20vh;
+            left: -10vw;
+        }
+
+        body::after {
+            background: rgba(139, 92, 246, 0.4);
+            /* Violet orb */
+            bottom: -20vh;
+            right: -10vw;
+            animation-delay: -10s;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(5vw, -5vh) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-3vw, 4vh) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes scrollBanner {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -26,28 +97,43 @@
             transition: all 0.3s ease;
             border-radius: 1rem;
         }
+
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.08);
             transform: translateY(-2px);
         }
+
         .gradient-text {
             background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .creator-badge {
             background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 700;
         }
+
         .sync-status {
             position: fixed;
             bottom: 20px;
@@ -58,32 +144,39 @@
             font-size: 12px;
             font-weight: 500;
         }
+
         .sync-online {
             background: rgba(16, 185, 129, 0.2);
             color: #10b981;
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
+
         .sync-offline {
             background: rgba(245, 158, 11, 0.2);
             color: #f59e0b;
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
+
         .modal-overlay {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
         }
+
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
         }
     </style>
 </head>
+
 <body class="text-gray-100">
 
     <!-- Sync Status -->
@@ -92,7 +185,8 @@
     </div>
 
     <!-- Notification Center -->
-    <div id="notification-center" class="fixed top-20 right-4 w-80 max-h-96 overflow-y-auto glass-card p-4 hidden z-50 border border-white/20 custom-scrollbar">
+    <div id="notification-center"
+        class="fixed top-20 right-4 w-80 max-h-96 overflow-y-auto glass-card p-4 hidden z-50 border border-white/20 custom-scrollbar">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
             <h3 class="font-bold flex items-center gap-2">
                 <i class="fas fa-bell text-cyan-400"></i>
@@ -113,7 +207,8 @@
             <div class="glass-card bg-gray-900 w-full max-w-md border-2 border-amber-500/50">
                 <div class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                             <i class="fas fa-crown text-white text-xl"></i>
                         </div>
                         <div>
@@ -133,7 +228,8 @@
                         <button onclick="closeOwnerModal()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3">
                             Annuler
                         </button>
-                        <button onclick="verifyOwnerPassword()" class="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl py-3">
+                        <button onclick="verifyOwnerPassword()"
+                            class="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl py-3">
                             Accéder
                         </button>
                     </div>
@@ -145,9 +241,11 @@
     <!-- LOGIN PAGE -->
     <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass-card p-8 w-full max-w-md">
+            <!-- (Code de la page login original conservé...) -->
             <div class="text-center mb-6">
                 <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
-                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
+                <div
+                    class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
                     <i class="fas fa-bacteria text-3xl text-white"></i>
                 </div>
                 <h1 class="text-2xl font-bold">
@@ -168,7 +266,8 @@
                         <input type="password" name="password" placeholder="Mot de passe" required
                             class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-cyan-500">
                     </div>
-                    <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 text-white rounded-xl py-3.5 font-semibold">
+                    <button type="submit"
+                        class="w-full bg-gradient-to-r from-cyan-600 to-violet-600 text-white rounded-xl py-3.5 font-semibold">
                         Se connecter
                     </button>
                 </form>
@@ -204,7 +303,8 @@
                         <option value="responsable_cq">Responsable CQ</option>
                         <option value="superviseur">Superviseur</option>
                     </select>
-                    <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl py-3.5 font-semibold">
+                    <button type="submit"
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl py-3.5 font-semibold">
                         Créer mon compte
                     </button>
                 </form>
@@ -224,7 +324,8 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="showDashboard()">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
                             <i class="fas fa-bacteria text-white"></i>
                         </div>
                         <div class="hidden sm:block">
@@ -232,9 +333,9 @@
                             <span class="text-[10px] creator-badge block">By SOHAIB CHEKRI</span>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center space-x-4">
-                        <button onclick="openAlertModal()" 
+                        <button onclick="openAlertModal()"
                             class="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white px-4 py-2 rounded-xl flex items-center gap-2">
                             <i class="fas fa-exclamation-triangle"></i>
                             <span class="hidden sm:inline">Signaler</span>
@@ -242,22 +343,26 @@
 
                         <button onclick="toggleNotifications()" class="relative p-2 text-gray-400 hover:text-white">
                             <i class="fas fa-bell text-xl"></i>
-                            <span id="nav-notif-badge" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                            <span id="nav-notif-badge"
+                                class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                         </button>
-                        
+
                         <div class="relative" id="profile-menu">
-                            <button onclick="toggleProfileMenu()" class="flex items-center gap-3 pl-4 border-l border-white/10 hover:bg-white/5 rounded-xl p-2">
+                            <button onclick="toggleProfileMenu()"
+                                class="flex items-center gap-3 pl-4 border-l border-white/10 hover:bg-white/5 rounded-xl p-2">
                                 <div class="text-right hidden sm:block">
                                     <p class="text-sm font-medium" id="user-name"></p>
                                     <p class="text-xs text-cyan-400" id="user-role"></p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                                     <i class="fas fa-user text-white"></i>
                                 </div>
                                 <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
                             </button>
-                            
-                            <div id="profile-dropdown" class="absolute right-0 top-full mt-2 w-48 glass-card hidden overflow-hidden">
+
+                            <div id="profile-dropdown"
+                                class="absolute right-0 top-full mt-2 w-48 glass-card hidden overflow-hidden">
                                 <div class="p-3 border-b border-white/10 bg-amber-500/10">
                                     <p class="text-xs text-amber-400 font-bold text-center">Propriétaire</p>
                                 </div>
@@ -267,11 +372,13 @@
                                 <button onclick="showDashboard()" class="w-full text-left px-4 py-3 hover:bg-white/10">
                                     <i class="fas fa-home mr-2"></i>Tableau de bord
                                 </button>
-                                <button onclick="showAdminPanel()" class="w-full text-left px-4 py-3 hover:bg-white/10 text-amber-400">
+                                <button onclick="showAdminPanel()"
+                                    class="w-full text-left px-4 py-3 hover:bg-white/10 text-amber-400">
                                     <i class="fas fa-crown mr-2"></i>Gestion
                                 </button>
                                 <div class="border-t border-white/10"></div>
-                                <button onclick="logout()" class="w-full text-left px-4 py-3 hover:bg-white/10 text-red-400">
+                                <button onclick="logout()"
+                                    class="w-full text-left px-4 py-3 hover:bg-white/10 text-red-400">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
                                 </button>
                             </div>
@@ -283,16 +390,62 @@
 
         <!-- Dashboard -->
         <main id="dashboard-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div id="owner-banner" class="hidden mb-6 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-6">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div id="owner-banner"
+                class="hidden mb-6 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl overflow-hidden relative">
+                <!-- Owner Banner content (Z-index pour rester au dessus) -->
+                <div
+                    class="relative z-10 p-6 flex items-center gap-4 bg-gradient-to-r from-amber-900/90 to-transparent w-full md:w-1/3">
+                    <div
+                        class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
                         <i class="fas fa-crown text-2xl text-white"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold">SOHAIB CHEKRI</h2>
-                        <p class="text-amber-200">Propriétaire - BIOCARE-BIOTECH</p>
+                        <h2 class="text-2xl font-bold text-white whitespace-nowrap">SOHAIB CHEKRI</h2>
+                        <p
+                            class="text-amber-400 font-medium tracking-wide text-xs md:text-sm uppercase whitespace-nowrap">
+                            Propriétaire - BIOCARE</p>
                     </div>
                 </div>
+
+                <!-- Static Message Background -->
+                <div
+                    class="absolute inset-y-0 right-14 left-0 md:left-[33%] flex items-center bg-black/20 backdrop-blur-sm border-l border-amber-500/20 px-6 overflow-hidden">
+                    <div
+                        class="text-sm border-l-4 border-amber-500/50 pl-4 py-1 text-amber-200/90 font-medium italic line-clamp-2">
+                        <span id="owner-message-text"></span>
+                    </div>
+                </div>
+
+                <!-- Edit button -->
+                <button onclick="openMessageModal()"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 flex items-center justify-center transition-colors border border-amber-500/30">
+                    <i class="fas fa-pencil-alt text-xs"></i>
+                </button>
+            </div>
+
+            <!-- EN-TETE AVEC BARRE DE RECHERCHE ET EXPORT -->
+
+            <!-- Global Team Message -->
+            <div id="team-message-banner"
+                class="hidden mb-6 bg-cyan-500/10 border border-cyan-500/20 rounded-xl overflow-hidden relative">
+                <div
+                    class="absolute inset-y-0 left-0 bg-cyan-900/50 w-12 flex items-center justify-center z-10 border-r border-cyan-500/20">
+                    <i class="fas fa-bullhorn text-cyan-400"></i>
+                </div>
+                <div class="overflow-hidden flex items-center h-10 ml-12">
+                    <div class="whitespace-nowrap px-4 text-sm text-cyan-100 font-medium tracking-wide flex items-center gap-12"
+                        style="animation: scrollBanner 40s linear infinite;">
+                        <span id="global-message-text" class="italic">Chargement des informations...</span>
+                        <span id="global-message-text-clone" class="italic" aria-hidden="true">Chargement des
+                            informations...</span>
+                    </div>
+                </div>
+
+                <!-- Edit button for owner only -->
+                <button id="edit-global-message-btn" onclick="openMessageModal()"
+                    class="hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/40 items-center justify-center transition-colors border border-cyan-500/30">
+                    <i class="fas fa-pencil-alt text-xs"></i>
+                </button>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -300,40 +453,62 @@
                     <h1 class="text-3xl font-bold">Tableau de bord</h1>
                     <p class="text-gray-400">Signalements du laboratoire</p>
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="exportToExcel()" class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5">
-                        <i class="fas fa-file-excel text-emerald-400 mr-2"></i>Excel
-                    </button>
-                    <select id="filter-type" onchange="loadAlerts()" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                        <option value="all">Tous</option>
-                        <option value="missing">Manquants</option>
-                        <option value="outofstock">Stock épuisé</option>
-                        <option value="expired">Périmés</option>
-                        <option value="damaged">Endommagé</option>
-                        <option value="other">Autre</option>
-                    </select>
+
+                <div class="flex flex-col sm:flex-row w-full md:w-auto gap-3">
+
+                    <!-- NEW SEARCH BAR -->
+                    <div class="relative w-full sm:w-64">
+                        <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Rechercher (produit, réf, demandeur)..."
+                            onkeyup="loadAlerts()"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-cyan-500 text-sm placeholder-gray-500">
+                    </div>
+
+                    <!-- EXPORT & TYPE FILTERS -->
+                    <div class="flex gap-2">
+                        <button onclick="exportToExcel()"
+                            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-sm whitespace-nowrap transition-colors">
+                            <i class="fas fa-file-excel text-emerald-400 mr-2"></i>Exporter Excel
+                        </button>
+
+                        <select id="filter-type" onchange="loadAlerts()"
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+                            <option value="all">Tous les types</option>
+                            <option value="missing">Manquants</option>
+                            <option value="outofstock">Stock épuisé</option>
+                            <option value="expired">Périmés</option>
+                            <option value="damaged">Endommagé</option>
+                            <option value="resolved">Résolus</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Stats -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4 text-center border-t-cyan-500 border-t-2 cursor-pointer hover:bg-white/10 transition-colors"
+                    onclick="setFilter('all')">
                     <h3 class="text-2xl font-bold" id="stat-total">0</h3>
-                    <p class="text-gray-400 text-xs">Actifs</p>
+                    <p class="text-gray-400 text-xs mt-1">Éléments Affichés</p>
                 </div>
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+                    onclick="setFilter('missing')">
                     <h3 class="text-2xl font-bold text-orange-400" id="stat-missing">0</h3>
                     <p class="text-gray-400 text-xs">Manquants</p>
                 </div>
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+                    onclick="setFilter('outofstock')">
                     <h3 class="text-2xl font-bold text-rose-400" id="stat-outofstock">0</h3>
                     <p class="text-gray-400 text-xs">Stock épuisé</p>
                 </div>
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+                    onclick="setFilter('expired')">
                     <h3 class="text-2xl font-bold text-yellow-400" id="stat-expired">0</h3>
                     <p class="text-gray-400 text-xs">Périmés</p>
                 </div>
-                <div class="glass-card p-4 text-center">
+                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+                    onclick="setFilter('resolved')">
                     <h3 class="text-2xl font-bold text-emerald-400" id="stat-resolved">0</h3>
                     <p class="text-gray-400 text-xs">Résolus</p>
                 </div>
@@ -351,11 +526,12 @@
                 </button>
                 <h1 class="text-3xl font-bold">Mon profil</h1>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Photo/Carte -->
                 <div class="glass-card p-6 text-center border-2 border-amber-500/30">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
+                    <div
+                        class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
                         <i class="fas fa-user text-4xl text-white"></i>
                     </div>
                     <h2 class="text-xl font-bold" id="profile-name"></h2>
@@ -379,7 +555,8 @@
                             </div>
                             <input type="email" id="edit-email" name="email" placeholder="Email" required
                                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
-                            <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl">
+                            <button type="submit"
+                                class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl">
                                 <i class="fas fa-save mr-2"></i>Enregistrer
                             </button>
                         </form>
@@ -402,11 +579,13 @@
                                     class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">Confirmer le nouveau mot de passe</label>
+                                <label class="block text-sm text-gray-400 mb-1">Confirmer le nouveau mot de
+                                    passe</label>
                                 <input type="password" name="confirmPassword" required
                                     class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
                             </div>
-                            <button type="submit" class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl">
+                            <button type="submit"
+                                class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl">
                                 <i class="fas fa-key mr-2"></i>Changer le mot de passe
                             </button>
                         </form>
@@ -428,7 +607,8 @@
     <div id="admin-panel" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
         <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div class="glass-card bg-gray-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar p-6 border-2 border-amber-500/30">
+            <div
+                class="glass-card bg-gray-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar p-6 border-2 border-amber-500/30">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-amber-400">Gestion Propriétaire</h2>
@@ -450,12 +630,14 @@
                                 class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
                             <input type="email" name="email" placeholder="Email" required
                                 class="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                            <select name="role" required class="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                            <select name="role" required
+                                class="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
                                 <option value="analyste_microbio">Analyste Microbiologie</option>
                                 <option value="responsable_cq">Responsable CQ</option>
                                 <option value="superviseur">Superviseur</option>
                             </select>
-                            <button type="submit" class="col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-3">
+                            <button type="submit"
+                                class="col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-3">
                                 <i class="fas fa-paper-plane mr-2"></i>Inviter
                             </button>
                         </form>
@@ -482,15 +664,39 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
+
                 <form id="alert-form" onsubmit="submitAlert(event)" class="space-y-4">
-                    <select name="type" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                        <option value="missing">Produit manquant</option>
-                        <option value="outofstock">Stock épuisé</option>
-                        <option value="expired">Produit périmé</option>
-                        <option value="damaged">Matériel endommagé</option>
-                        <option value="other">Autre problème</option>
-                    </select>
+                    <div class="space-y-2">
+                        <label class="block text-sm mb-1 text-gray-400">Type(s) de problème <span
+                                class="text-xs text-cyan-500">* (Sélection multiple)</span></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label
+                                class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-white/10 transition-colors">
+                                <input type="checkbox" name="type" value="missing" class="w-4 h-4 accent-cyan-500">
+                                <span class="text-sm">Produit manquant</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-white/10 transition-colors">
+                                <input type="checkbox" name="type" value="outofstock" class="w-4 h-4 accent-cyan-500">
+                                <span class="text-sm">Stock épuisé</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-white/10 transition-colors">
+                                <input type="checkbox" name="type" value="expired" class="w-4 h-4 accent-cyan-500">
+                                <span class="text-sm">Produit périmé</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-white/10 transition-colors">
+                                <input type="checkbox" name="type" value="damaged" class="w-4 h-4 accent-cyan-500">
+                                <span class="text-sm">Matériel endommagé</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-white/10 transition-colors col-span-2">
+                                <input type="checkbox" name="type" value="other" class="w-4 h-4 accent-cyan-500">
+                                <span class="text-sm">Autre problème</span>
+                            </label>
+                        </div>
+                    </div>
 
                     <input type="text" name="productName" placeholder="Nom du produit" required
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
@@ -499,19 +705,31 @@
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
 
                     <div>
+                        <label class="block text-sm mb-1 text-gray-400">Date de péremption (optionnel)</label>
+                        <input type="date" name="expirationDate"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <div>
                         <label class="block text-sm mb-1">Urgence</label>
                         <div class="flex gap-3">
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="urgency" value="low" class="hidden peer">
-                                <div class="p-2 border border-white/10 bg-white/5 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 text-center text-sm rounded-lg">Basse</div>
+                                <div
+                                    class="p-2 border border-white/10 bg-white/5 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 text-center text-sm rounded-lg">
+                                    Basse</div>
                             </label>
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="urgency" value="medium" class="hidden peer" checked>
-                                <div class="p-2 border border-white/10 bg-white/5 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 text-center text-sm rounded-lg">Moyenne</div>
+                                <div
+                                    class="p-2 border border-white/10 bg-white/5 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 text-center text-sm rounded-lg">
+                                    Moyenne</div>
                             </label>
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="urgency" value="high" class="hidden peer">
-                                <div class="p-2 border border-white/10 bg-white/5 peer-checked:border-red-500 peer-checked:bg-red-500/10 text-center text-sm rounded-lg">Haute</div>
+                                <div
+                                    class="p-2 border border-white/10 bg-white/5 peer-checked:border-red-500 peer-checked:bg-red-500/10 text-center text-sm rounded-lg">
+                                    Haute</div>
                             </label>
                         </div>
                     </div>
@@ -520,10 +738,12 @@
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 resize-none"></textarea>
 
                     <div class="flex gap-3">
-                        <button type="button" onclick="closeAlertModal()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3">
+                        <button type="button" onclick="closeAlertModal()"
+                            class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3">
                             Annuler
                         </button>
-                        <button type="submit" class="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl py-3">
+                        <button type="submit"
+                            class="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl py-3">
                             <i class="fas fa-paper-plane mr-2"></i>Signaler
                         </button>
                     </div>
@@ -539,22 +759,47 @@
         </div>
     </div>
 
+    <!-- Message Modal (Owner) -->
+    <div id="message-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeMessageModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card bg-gray-900 w-full max-w-lg p-6 border-2 border-amber-500/30">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-amber-400">Message défilant</h2>
+                    <button onclick="closeMessageModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="message-form" onsubmit="saveOwnerMessage(event)" class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm mb-1 text-gray-400">Texte à afficher dans la bannière
+                            propriétaire</label>
+                        <input type="text" id="owner-message-input" name="message" placeholder="Votre message..."
+                            required
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeMessageModal()"
+                            class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit"
+                            class="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl py-3 hover:from-amber-500 hover:to-orange-500 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            getDocs,
-            deleteDoc,
-            updateDoc,
-            doc,
-            onSnapshot, 
-            query, 
-            orderBy,
-            where,
-            setDoc
+        import {
+            getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, where, setDoc
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -568,12 +813,12 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
+
         window.db = db;
         window.alerts = [];
         window.isOnline = navigator.onLine;
 
-        // Fonctions Firebase
+        // Firebase Auth Methods
         window.getAllUsers = async () => {
             const snapshot = await getDocs(collection(db, "users"));
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -587,45 +832,56 @@
             return userData.id;
         };
 
-        window.updateUserInFirestore = async (userId, updates) => {
-            await updateDoc(doc(db, "users", userId.toString()), updates);
-        };
+        window.updateUserInFirestore = async (userId, updates) => { await updateDoc(doc(db, "users", userId.toString()), updates); };
+        window.deleteUserFromFirestore = async (userId) => { await deleteDoc(doc(db, "users", userId.toString())); };
+        window.addAlertToFirestore = async (alertData) => { const docRef = await addDoc(collection(db, "alerts"), alertData); return docRef.id; };
+        window.deleteAlertFromFirestore = async (alertId) => { await deleteDoc(doc(db, "alerts", alertId)); };
+        window.updateAlertInFirestore = async (alertId, updates) => { await updateDoc(doc(db, "alerts", alertId), updates); };
 
-        window.deleteUserFromFirestore = async (userId) => {
-            await deleteDoc(doc(db, "users", userId.toString()));
-        };
-
-        window.addAlertToFirestore = async (alertData) => {
-            const docRef = await addDoc(collection(db, "alerts"), alertData);
-            return docRef.id;
-        };
-
-        window.deleteAlertFromFirestore = async (alertId) => {
-            await deleteDoc(doc(db, "alerts", alertId));
-        };
-
-        window.updateAlertInFirestore = async (alertId, updates) => {
-            await updateDoc(doc(db, "alerts", alertId), updates);
-        };
-
-        // Load alerts
+        // ** MODIFICATION ICi: CHARGEMENT DES ALERTES VIA FIREBASE ***
         window.loadAlerts = async () => {
             const q = query(collection(db, "alerts"), orderBy("date", "desc"));
             const snapshot = await getDocs(q);
             window.alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderAlerts();
+
+            // Appel rendu principal des alertes
+            window.renderFilteredAlerts();
             updateStats();
         };
 
-        // Real-time updates
         onSnapshot(collection(db, "alerts"), (snapshot) => {
             window.alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderAlerts();
+            window.renderFilteredAlerts();
             updateStats();
         });
 
-        // Sync status
-        window.updateSyncStatus = function(online) {
+        // Expose Firebase functions to window for regular scripts
+        window.setFirebaseDoc = setDoc;
+        window.firebaseDoc = doc;
+
+        // Listen for settings (Owner Message)
+        onSnapshot(doc(db, "settings", "general"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.ownerMessage) {
+                    const globalMsg = document.getElementById('global-message-text');
+                    const globalMsgClone = document.getElementById('global-message-text-clone');
+                    const banner = document.getElementById('team-message-banner');
+                    const inputEl = document.getElementById('owner-message-input');
+
+                    if (globalMsg) globalMsg.textContent = data.ownerMessage;
+                    if (globalMsgClone) globalMsgClone.textContent = data.ownerMessage;
+                    if (banner) banner.classList.remove('hidden');
+                    if (inputEl) inputEl.value = data.ownerMessage;
+                } else {
+                    const banner = document.getElementById('team-message-banner');
+                    if (banner) banner.classList.add('hidden');
+                }
+            }
+        });
+
+        // Sync Status Checks
+        window.updateSyncStatus = function (online) {
             const statusEl = document.getElementById('sync-status');
             if (statusEl) {
                 statusEl.classList.remove('hidden');
@@ -639,28 +895,53 @@
             }
         };
 
-        window.addEventListener('online', () => {
-            window.isOnline = true;
-            updateSyncStatus(true);
-        });
-        
-        window.addEventListener('offline', () => {
-            window.isOnline = false;
-            updateSyncStatus(false);
-        });
-
+        window.addEventListener('online', () => { window.isOnline = true; updateSyncStatus(true); });
+        window.addEventListener('offline', () => { window.isOnline = false; updateSyncStatus(false); });
         updateSyncStatus(navigator.onLine);
     </script>
 
+    <!-- CORE LOGIC: RECHERCHE & EXPORT & MESSAGING -->
     <script>
-        // Constantes
+        // Constants
         const OWNER_PASSWORD = 'FARAH2025+';
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
         let notifications = JSON.parse(localStorage.getItem('labNotifications')) || [];
-        let lastInvitedCredentials = null;
 
-        // Toast
-        window.showToast = function(message, isError = false) {
+        // Message Modal Logic
+        window.openMessageModal = function () {
+            document.getElementById('message-modal').classList.remove('hidden');
+        };
+
+        window.closeMessageModal = function () {
+            document.getElementById('message-modal').classList.add('hidden');
+        };
+
+        window.saveOwnerMessage = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const message = formData.get('message');
+
+            try {
+                // Must use global functions exposed from Firebase module
+                await window.setFirebaseDoc(window.firebaseDoc(window.db, "settings", "general"), { ownerMessage: message }, { merge: true });
+                showToast('Message mis à jour avec succès');
+                closeMessageModal();
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+                console.error(error);
+            }
+        };
+
+        // UI Utils
+        window.setFilter = function (type) {
+            const filterSelect = document.getElementById('filter-type');
+            if (filterSelect) {
+                filterSelect.value = type;
+                window.renderFilteredAlerts();
+            }
+        };
+
+        window.showToast = function (message, isError = false) {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-message');
             msgEl.textContent = message;
@@ -669,272 +950,99 @@
             setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
         };
 
-        // Formatage
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-        }
-
-        function getTypeLabel(type) {
-            const labels = {
-                missing: 'Manquant',
-                outofstock: 'Stock épuisé',
-                expired: 'Périmé',
-                damaged: 'Endommagé',
-                other: 'Autre'
-            };
-            return labels[type] || type;
-        }
-
-        function getTypeStyle(type) {
-            const styles = {
-                missing: 'bg-orange-500/20',
-                outofstock: 'bg-rose-500/20',
-                expired: 'bg-yellow-500/20',
-                damaged: 'bg-violet-500/20',
-                other: 'bg-cyan-500/20'
-            };
-            return styles[type] || 'bg-gray-500/20';
-        }
-
-        function getUrgencyStyle(urgency) {
-            const styles = {
-                low: 'bg-emerald-500/20 text-emerald-400',
-                medium: 'bg-yellow-500/20 text-yellow-400',
-                high: 'bg-red-500/20 text-red-400'
-            };
-            return styles[urgency] || 'bg-gray-500/20';
-        }
-
-        function getUrgencyLabel(urgency) {
-            const labels = { low: 'Basse', medium: 'Moyenne', high: 'Haute' };
-            return labels[urgency] || urgency;
-        }
+        function formatDate(dateString) { return new Date(dateString).toLocaleDateString('fr-FR') + ' ' + new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+        function getTypesArray(type) { return Array.isArray(type) ? type : [type]; }
+        function getTypeLabel(type) { const labels = { missing: 'Manquant', outofstock: 'Stock épuisé', expired: 'Périmé', damaged: 'Endommagé', other: 'Autre' }; return getTypesArray(type).map(t => labels[t] || t).join(', '); }
+        function getTypeStyle(type) { const t = getTypesArray(type)[0]; const styles = { missing: 'bg-orange-500/20 text-orange-400', outofstock: 'bg-rose-500/20 text-rose-400', expired: 'bg-yellow-500/20 text-yellow-400', damaged: 'bg-violet-500/20 text-violet-400', other: 'bg-cyan-500/20 text-cyan-400' }; return styles[t] || 'bg-gray-500/20 text-gray-400'; }
+        function getIconForType(type) { const t = getTypesArray(type)[0]; return t === 'missing' ? 'box-open' : t === 'outofstock' ? 'times-circle' : t === 'expired' ? 'calendar-times' : t === 'damaged' ? 'tools' : 'question-circle'; }
+        function getUrgencyStyle(u) { const styles = { low: 'bg-emerald-500/20 text-emerald-400', medium: 'bg-yellow-500/20 text-yellow-400', high: 'bg-red-500/20 text-red-400' }; return styles[u] || 'bg-gray-500/20'; }
+        function getUrgencyLabel(u) { const labels = { low: 'Basse', medium: 'Moyenne', high: 'Haute' }; return labels[u] || u; }
 
         // Navigation
-        window.showLogin = function() {
-            document.getElementById('register-form-container').classList.add('hidden');
-            document.getElementById('login-form-container').classList.remove('hidden');
-        };
+        window.showLogin = function () { document.getElementById('register-form-container').classList.add('hidden'); document.getElementById('login-form-container').classList.remove('hidden'); };
+        window.showRegister = function () { document.getElementById('login-form-container').classList.add('hidden'); document.getElementById('register-form-container').classList.remove('hidden'); };
+        window.showDashboard = function () { document.getElementById('dashboard-section').classList.remove('hidden'); document.getElementById('profile-section').classList.add('hidden'); document.getElementById('profile-dropdown').classList.add('hidden'); window.loadAlerts(); };
+        window.showProfile = function () { document.getElementById('dashboard-section').classList.add('hidden'); document.getElementById('profile-section').classList.remove('hidden'); document.getElementById('profile-dropdown').classList.add('hidden'); document.getElementById('profile-name').textContent = currentUser.firstName + ' ' + currentUser.lastName; document.getElementById('profile-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur'; document.getElementById('edit-firstname').value = currentUser.firstName; document.getElementById('edit-lastname').value = currentUser.lastName; document.getElementById('edit-email').value = currentUser.email; renderMyAlerts(); };
+        window.toggleProfileMenu = function () { document.getElementById('profile-dropdown').classList.toggle('hidden'); };
+        window.toggleNotifications = function () { const center = document.getElementById('notification-center'); center.classList.toggle('hidden'); if (!center.classList.contains('hidden')) { renderNotifications(); } };
 
-        window.showRegister = function() {
-            document.getElementById('login-form-container').classList.add('hidden');
-            document.getElementById('register-form-container').classList.remove('hidden');
-        };
+        window.logout = function () { currentUser = null; localStorage.removeItem('currentUser'); document.getElementById('main-app').classList.add('hidden'); document.getElementById('login-page').classList.remove('hidden'); document.getElementById('profile-dropdown').classList.add('hidden'); showToast('Déconnecté'); };
 
-        window.showDashboard = function() {
-            document.getElementById('dashboard-section').classList.remove('hidden');
-            document.getElementById('profile-section').classList.add('hidden');
-            document.getElementById('profile-dropdown').classList.add('hidden');
-            loadAlerts();
-        };
+        // --- GESTION DE LA RECHERCHE ET DU FILTRAGE MULTIPLE --- 
+        function getFilteredData() {
+            const filterValue = document.getElementById('filter-type').value;
+            const searchValue = document.getElementById('search-input').value.toLowerCase().trim();
 
-        window.showProfile = function() {
-            document.getElementById('dashboard-section').classList.add('hidden');
-            document.getElementById('profile-section').classList.remove('hidden');
-            document.getElementById('profile-dropdown').classList.add('hidden');
-            
-            document.getElementById('profile-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-            document.getElementById('profile-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur';
-            document.getElementById('edit-firstname').value = currentUser.firstName;
-            document.getElementById('edit-lastname').value = currentUser.lastName;
-            document.getElementById('edit-email').value = currentUser.email;
-            
-            renderMyAlerts();
-        };
-
-        window.toggleProfileMenu = function() {
-            document.getElementById('profile-dropdown').classList.toggle('hidden');
-        };
-
-        window.toggleNotifications = function() {
-            const center = document.getElementById('notification-center');
-            center.classList.toggle('hidden');
-            if (!center.classList.contains('hidden')) {
-                renderNotifications();
-            }
-        };
-
-        // Auth
-        window.handleRegister = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            
-            const newUser = {
-                id: Date.now(),
-                firstName: formData.get('firstName'),
-                lastName: formData.get('lastName'),
-                email: formData.get('email'),
-                password: formData.get('password'),
-                role: formData.get('role'),
-                createdAt: new Date().toISOString()
-            };
-
-            try {
-                await window.addUserToFirestore(newUser);
-                currentUser = newUser;
-                localStorage.setItem('currentUser', JSON.stringify(newUser));
-                showToast('Compte créé avec succès !');
-                document.getElementById('register-form-container').classList.add('hidden');
-                document.getElementById('login-page').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-                document.getElementById('user-role').textContent = currentUser.role.replace('_', ' ');
-                loadAlerts();
-            } catch (error) {
-                showToast(error.message === "EMAIL_EXISTS" ? 'Email déjà utilisé' : 'Erreur: ' + error.message, true);
-            }
-        };
-
-        window.handleLogin = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const email = formData.get('email');
-            const password = formData.get('password');
-
-            try {
-                const users = await window.getAllUsers();
-                const user = users.find(u => u.email === email && u.password === password);
-                
-                if (user) {
-                    currentUser = user;
-                    localStorage.setItem('currentUser', JSON.stringify(user));
-                    showToast('Connexion réussie !');
-                    document.getElementById('login-page').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                    document.getElementById('user-name').textContent = user.firstName + ' ' + user.lastName;
-                    document.getElementById('user-role').textContent = user.role.replace('_', ' ');
-                    if (user.isOwner) {
-                        document.getElementById('owner-banner').classList.remove('hidden');
-                    }
-                    loadAlerts();
+            return window.alerts.filter(alert => {
+                // 1. Check Filtre Déroulant
+                let matchType = false;
+                if (filterValue === 'all') {
+                    matchType = true;
+                } else if (filterValue === 'resolved') {
+                    matchType = alert.status === 'resolved';
                 } else {
-                    showToast('Email ou mot de passe incorrect', true);
+                    matchType = getTypesArray(alert.type).includes(filterValue);
                 }
-            } catch (error) {
-                showToast('Erreur: ' + error.message, true);
-            }
-        };
 
-        window.logout = function() {
-            currentUser = null;
-            localStorage.removeItem('currentUser');
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('login-page').classList.remove('hidden');
-            document.getElementById('profile-dropdown').classList.add('hidden');
-            showToast('Déconnecté');
-        };
+                // 2. Check Barre de recherche (Texte)
+                const searchText = `${alert.productName || ''} ${alert.reference || ''} ${alert.reportedBy?.firstName || ''} ${alert.reportedBy?.lastName || ''}`.toLowerCase();
+                const matchSearch = searchText.includes(searchValue);
 
-        // Owner
-        window.openOwnerModal = function() {
-            document.getElementById('owner-modal').classList.remove('hidden');
-        };
+                return matchType && matchSearch;
+            });
+        }
 
-        window.closeOwnerModal = function() {
-            document.getElementById('owner-modal').classList.add('hidden');
-        };
-
-        window.verifyOwnerPassword = async function() {
-            const password = document.getElementById('owner-password-input').value;
-            if (password === OWNER_PASSWORD) {
-                const owner = {
-                    id: 999999,
-                    firstName: "SOHAIB",
-                    lastName: "CHEKRI",
-                    email: "sohaibchekri@gmail.com",
-                    role: "Propriétaire",
-                    isOwner: true
-                };
-                currentUser = owner;
-                localStorage.setItem('currentUser', JSON.stringify(owner));
-                closeOwnerModal();
-                document.getElementById('login-page').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('user-name').textContent = owner.firstName + ' ' + owner.lastName;
-                document.getElementById('user-role').textContent = 'Propriétaire';
-                document.getElementById('owner-banner').classList.remove('hidden');
-            } else {
-                showToast('Mot de passe incorrect', true);
-            }
-        };
-
-        // Alertes
-        window.openAlertModal = function() {
-            document.getElementById('alert-modal').classList.remove('hidden');
-        };
-
-        window.closeAlertModal = function() {
-            document.getElementById('alert-modal').classList.add('hidden');
-            document.getElementById('alert-form').reset();
-        };
-
-        window.submitAlert = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-
-            const newAlert = {
-                type: formData.get('type'),
-                productName: formData.get('productName'),
-                reference: formData.get('reference') || '',
-                urgency: formData.get('urgency') || 'medium',
-                status: 'pending',
-                reportedBy: {
-                    id: currentUser.id,
-                    firstName: currentUser.firstName,
-                    lastName: currentUser.lastName
-                },
-                date: new Date().toISOString(),
-                notes: formData.get('notes') || ''
-            };
-
-            try {
-                await window.addAlertToFirestore(newAlert);
-                showToast('Signalement créé');
-                closeAlertModal();
-                addNotification('Nouveau signalement', `${currentUser.firstName} a signalé: ${newAlert.productName}`, 'new_alert');
-            } catch (error) {
-                showToast('Erreur: ' + error.message, true);
-            }
-        };
-
-        window.renderAlerts = function() {
+        // C'est la fonction appelée par Firabse loadAlerts ET lors d'une saisie (#search-input) 
+        window.renderFilteredAlerts = function () {
             const container = document.getElementById('alerts-container');
-            const filter = document.getElementById('filter-type').value;
-            
-            let filtered = window.alerts;
-            if (filter !== 'all') {
-                filtered = window.alerts.filter(a => a.type === filter);
-            }
 
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center py-12 text-gray-400">Aucun signalement</div>';
+            // On récupère QUE les alertes qui matchent avec la recherche
+            const filteredArray = getFilteredData();
+
+            // Vue Vide
+            if (filteredArray.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-400">Aucun signalement ne correspond à votre recherche.</div>';
+                document.getElementById('stat-total').textContent = '0';
                 return;
             }
 
-            container.innerHTML = filtered.map(alert => `
+            // Met a jour le compteur total en direct
+            document.getElementById('stat-total').textContent = filteredArray.length;
+
+            // Render
+            container.innerHTML = filteredArray.map(alert => `
                 <div class="glass-card p-6 animate-fade-in">
                     <div class="flex flex-col md:flex-row justify-between gap-4">
                         <div class="flex-1">
                             <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-xl ${getTypeStyle(alert.type)} flex items-center justify-center text-2xl">
-                                    <i class="fas fa-${alert.type === 'missing' ? 'box-open' : alert.type === 'outofstock' ? 'times-circle' : alert.type === 'expired' ? 'calendar-times' : alert.type === 'damaged' ? 'tools' : 'question-circle'}"></i>
+                                <div class="w-12 h-12 rounded-xl border border-white/5 ${getTypeStyle(alert.type)} flex items-center justify-center text-2xl">
+                                    <i class="fas fa-${getIconForType(alert.type)}"></i>
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex flex-wrap items-center gap-2 mb-1">
-                                        <h3 class="font-bold text-lg">${alert.productName}</h3>
+                                        <h3 class="font-bold text-lg mr-2">${alert.productName}</h3>
+                                        ${getTypesArray(alert.type).map(t => `<span class="px-2 py-0.5 rounded text-xs font-medium ${getTypeStyle(t)} border border-white/5">${getTypeLabel(t)}</span>`).join('')}
                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium ${getUrgencyStyle(alert.urgency)}">
                                             ${getUrgencyLabel(alert.urgency)}
                                         </span>
                                         ${alert.status === 'resolved' ? '<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400">Résolu</span>' : ''}
                                     </div>
-                                    <p class="text-sm text-gray-400">
-                                        <i class="fas fa-user-circle mr-1"></i>
-                                        ${alert.reportedBy.firstName} ${alert.reportedBy.lastName}
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-clock mr-1"></i>
-                                        ${formatDate(alert.date)}
+                                    <p class="text-sm text-gray-400 flex items-center flex-wrap gap-2">
+                                        <span><i class="fas fa-user-circle mr-1"></i>${alert.reportedBy.firstName} ${alert.reportedBy.lastName}</span>
+                                        ${alert.reportedBy.role ? `<span class="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-300 border border-white/5 uppercase tracking-wider">${alert.reportedBy.role.replace('_', ' ')}</span>` : ''}
+                                        <span class="text-gray-600">•</span>
+                                        <span><i class="fas fa-clock mr-1"></i>${formatDate(alert.date)}</span>
                                     </p>
-                                    ${alert.notes ? `<p class="text-sm mt-2 text-gray-300">${alert.notes}</p>` : ''}
+                                    ${alert.expirationDate ? `<p class="text-sm mt-2"><span class="text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded text-xs font-medium"><i class="fas fa-calendar-times mr-1"></i>Péremption: ${alert.expirationDate}</span></p>` : ''}
+                                    ${alert.notes ? `
+                                    <div class="mt-4 p-3 bg-cyan-500/10 border-l-2 border-cyan-500 rounded-r-xl">
+                                        <div class="flex flex-col gap-1">
+                                            <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                                                <i class="fas fa-info-circle"></i> Informations complémentaires
+                                            </span>
+                                            <p class="text-sm text-gray-200">${alert.notes}</p>
+                                        </div>
+                                    </div>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -957,37 +1065,193 @@
             `).join('');
         };
 
-        window.updateStats = function() {
+        // Fallback global de compatibilité
+        // Firebase appelle ça explicitement par endroit
+        window.renderAlerts = window.renderFilteredAlerts;
+
+        // --- NOUVEL EXPORT EXCEL (Basé sur la recherche UNIQUEMENT) ---
+        window.exportToExcel = function () {
+            // On récupère que la nouvelle sélection
+            const displayedAlerts = getFilteredData();
+
+            if (displayedAlerts.length === 0) {
+                showToast("Aucune donnée à exporter.", true);
+                return;
+            }
+
+            const data = displayedAlerts.map(a => ({
+                Date: formatDate(a.date),
+                Type: getTypeLabel(a.type),
+                Produit: a.productName,
+                Référence: a.reference || '-',
+                'Péremption': a.expirationDate || '-',
+                Urgence: getUrgencyLabel(a.urgency),
+                'Signalé par': a.reportedBy.firstName + ' ' + a.reportedBy.lastName + (a.reportedBy.role ? ` (${a.reportedBy.role.replace('_', ' ')})` : ''),
+                Statut: a.status === 'resolved' ? 'Résolu' : 'En attente',
+                Notes: a.notes || '-'
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Signalements");
+            XLSX.writeFile(wb, `export_laboratoire_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast(`Export réussi (${displayedAlerts.length} éléments)`);
+        };
+
+
+        // RESTE DU CODE 
+        window.updateStats = function () {
             const active = window.alerts.filter(a => a.status !== 'resolved').length;
-            const missing = window.alerts.filter(a => a.type === 'missing' && a.status !== 'resolved').length;
-            const outofstock = window.alerts.filter(a => a.type === 'outofstock' && a.status !== 'resolved').length;
-            const expired = window.alerts.filter(a => a.type === 'expired' && a.status !== 'resolved').length;
+            const missing = window.alerts.filter(a => getTypesArray(a.type).includes('missing') && a.status !== 'resolved').length;
+            const outofstock = window.alerts.filter(a => getTypesArray(a.type).includes('outofstock') && a.status !== 'resolved').length;
+            const expired = window.alerts.filter(a => getTypesArray(a.type).includes('expired') && a.status !== 'resolved').length;
             const resolved = window.alerts.filter(a => a.status === 'resolved').length;
 
-            document.getElementById('stat-total').textContent = active;
             document.getElementById('stat-missing').textContent = missing;
             document.getElementById('stat-outofstock').textContent = outofstock;
             document.getElementById('stat-expired').textContent = expired;
             document.getElementById('stat-resolved').textContent = resolved;
         };
 
-        window.resolveAlert = async function(id) {
-            await window.updateAlertInFirestore(id, { status: 'resolved' });
-            showToast('Signalement résolu');
-        };
+        window.resolveAlert = async function (id) { await window.updateAlertInFirestore(id, { status: 'resolved' }); showToast('Signalement résolu'); };
+        window.deleteAlert = async function (id) { if (confirm('Supprimer ce signalement ?')) { await window.deleteAlertFromFirestore(id); showToast('Signalement supprimé'); } };
 
-        window.deleteAlert = async function(id) {
-            if (confirm('Supprimer ce signalement ?')) {
-                await window.deleteAlertFromFirestore(id);
-                showToast('Signalement supprimé');
+        // Login Logic & App Modals...
+        window.handleRegister = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const newUser = {
+                id: Date.now(),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await window.addUserToFirestore(newUser);
+                currentUser = newUser;
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                showToast('Compte créé avec succès !');
+                document.getElementById('register-form-container').classList.add('hidden');
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+                document.getElementById('user-role').textContent = currentUser.role.replace('_', ' ');
+                if (window.loadAlerts) window.loadAlerts();
+            } catch (error) {
+                showToast(error.message === "EMAIL_EXISTS" ? 'Email déjà utilisé' : 'Erreur: ' + error.message, true);
             }
         };
 
-        // Mes alertes
-        function renderMyAlerts() {
+        window.handleLogin = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            try {
+                const users = await window.getAllUsers();
+                const user = users.find(u => u.email === email && u.password === password);
+
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    showToast('Connexion réussie !');
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    document.getElementById('user-name').textContent = user.firstName + ' ' + user.lastName;
+                    document.getElementById('user-role').textContent = user.role.replace('_', ' ');
+                    if (user.isOwner) {
+                        document.getElementById('owner-banner').classList.remove('hidden');
+                    }
+                    if (window.loadAlerts) window.loadAlerts();
+                } else {
+                    showToast('Email ou mot de passe incorrect', true);
+                }
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+            }
+        };
+
+        // Owner
+        window.openOwnerModal = function () { document.getElementById('owner-modal').classList.remove('hidden'); };
+        window.closeOwnerModal = function () { document.getElementById('owner-modal').classList.add('hidden'); };
+        window.verifyOwnerPassword = async function () {
+            const password = document.getElementById('owner-password-input').value;
+            if (password === OWNER_PASSWORD) {
+                const owner = {
+                    id: 999999,
+                    firstName: "SOHAIB",
+                    lastName: "CHEKRI",
+                    email: "sohaibchekri@gmail.com",
+                    role: "Propriétaire",
+                    isOwner: true
+                };
+                currentUser = owner;
+                localStorage.setItem('currentUser', JSON.stringify(owner));
+                closeOwnerModal();
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('user-name').textContent = owner.firstName + ' ' + owner.lastName;
+                document.getElementById('user-role').textContent = 'Propriétaire';
+                document.getElementById('owner-banner').classList.remove('hidden');
+                if (window.loadAlerts) window.loadAlerts();
+            } else {
+                showToast('Mot de passe incorrect', true);
+            }
+        };
+
+        // Alertes
+        window.openAlertModal = function () { document.getElementById('alert-modal').classList.remove('hidden'); };
+        window.closeAlertModal = function () {
+            document.getElementById('alert-modal').classList.add('hidden');
+            document.getElementById('alert-form').reset();
+        };
+
+        window.submitAlert = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const selectedTypes = formData.getAll('type');
+            if (selectedTypes.length === 0) {
+                showToast("Veuillez sélectionner au moins un type de problème.", true);
+                return;
+            }
+
+            const newAlert = {
+                type: selectedTypes,
+                productName: formData.get('productName'),
+                reference: formData.get('reference') || '',
+                expirationDate: formData.get('expirationDate') || '',
+                urgency: formData.get('urgency') || 'medium',
+                status: 'pending',
+                reportedBy: {
+                    id: currentUser.id,
+                    firstName: currentUser.firstName,
+                    lastName: currentUser.lastName,
+                    role: currentUser.role || 'Utilisateur'
+                },
+                date: new Date().toISOString(),
+                notes: formData.get('notes') || ''
+            };
+
+            try {
+                await window.addAlertToFirestore(newAlert);
+                showToast('Signalement créé');
+                closeAlertModal();
+                addNotification('Nouveau signalement', `${currentUser.firstName} a signalé: ${newAlert.productName}`, 'new_alert');
+            } catch (error) {
+                showToast('Erreur: ' + error.message, true);
+            }
+        };
+
+        window.renderMyAlerts = function () {
             const container = document.getElementById('my-alerts-list');
             const myAlerts = window.alerts.filter(a => a.reportedBy?.id == currentUser.id);
-            
+
             if (myAlerts.length === 0) {
                 container.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">Aucun signalement</p>';
                 return;
@@ -1004,13 +1268,13 @@
                     </span>
                 </div>
             `).join('');
-        }
+        };
 
         // Profil
-        window.updateProfile = async function(e) {
+        window.updateProfile = async function (e) {
             e.preventDefault();
             const formData = new FormData(e.target);
-            
+
             const updates = {
                 firstName: formData.get('firstName'),
                 lastName: formData.get('lastName'),
@@ -1022,6 +1286,7 @@
                 currentUser = { ...currentUser, ...updates };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+                document.getElementById('profile-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
                 showToast('Profil mis à jour');
             } catch (error) {
                 showToast('Erreur: ' + error.message, true);
@@ -1029,27 +1294,16 @@
         };
 
         // Changer mot de passe
-        window.changePassword = async function(e) {
+        window.changePassword = async function (e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const currentPassword = formData.get('currentPassword');
             const newPassword = formData.get('newPassword');
             const confirmPassword = formData.get('confirmPassword');
 
-            if (currentPassword !== currentUser.password) {
-                showToast('Mot de passe actuel incorrect', true);
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                showToast('Les mots de passe ne correspondent pas', true);
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                showToast('Minimum 6 caractères', true);
-                return;
-            }
+            if (currentPassword !== currentUser.password) { showToast('Mot de passe actuel incorrect', true); return; }
+            if (newPassword !== confirmPassword) { showToast('Les mots de passe ne correspondent pas', true); return; }
+            if (newPassword.length < 6) { showToast('Minimum 6 caractères', true); return; }
 
             try {
                 await window.updateUserInFirestore(currentUser.id, { password: newPassword });
@@ -1063,31 +1317,27 @@
         };
 
         // Admin
-        window.showAdminPanel = async function() {
-            if (!currentUser?.isOwner) {
-                showToast('Accès réservé au propriétaire', true);
-                return;
-            }
+        window.showAdminPanel = async function () {
+            if (!currentUser?.isOwner) { showToast('Accès réservé au propriétaire', true); return; }
             document.getElementById('admin-panel').classList.remove('hidden');
             const users = await window.getAllUsers();
             renderTeamList(users);
         };
 
-        window.closeAdminPanel = function() {
+        window.closeAdminPanel = function () {
             document.getElementById('admin-panel').classList.add('hidden');
-            document.getElementById('invite-success')?.classList.add('hidden');
             document.getElementById('invite-form')?.reset();
         };
 
         function renderTeamList(users) {
             const container = document.getElementById('team-list');
             document.getElementById('team-count').textContent = users.length;
-            
+
             container.innerHTML = users.map(user => `
                 <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg ${user.isOwner ? 'bg-amber-500/10' : ''}">
                     <div>
                         <p class="font-medium">${user.firstName} ${user.lastName} ${user.isOwner ? '<span class="text-amber-400 text-xs ml-2"><i class="fas fa-crown"></i> Propriétaire</span>' : ''}</p>
-                        <p class="text-sm text-gray-400">${user.email}</p>
+                        <p class="text-sm text-gray-400">${user.role ? user.role.replace('_', ' ') : 'Utilisateur'} <span class="mx-1">•</span> ${user.email}</p>
                     </div>
                     ${!user.isOwner ? `
                         <button onclick="deleteUser('${user.id}')" class="text-red-400 hover:text-red-300">
@@ -1098,13 +1348,13 @@
             `).join('');
         }
 
-        window.inviteUser = async function(e) {
+        window.inviteUser = async function (e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const email = formData.get('email');
-            
+
             const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
-            
+
             const newUser = {
                 id: Date.now(),
                 firstName: formData.get('firstName'),
@@ -1117,7 +1367,6 @@
 
             try {
                 await window.addUserToFirestore(newUser);
-                lastInvitedCredentials = { email, password: tempPassword };
                 showToast('Utilisateur invité');
                 closeAdminPanel();
             } catch (error) {
@@ -1125,7 +1374,7 @@
             }
         };
 
-        window.deleteUser = async function(userId) {
+        window.deleteUser = async function (userId) {
             if (confirm('Supprimer cet utilisateur ?')) {
                 await window.deleteUserFromFirestore(userId);
                 showToast('Utilisateur supprimé');
@@ -1134,7 +1383,7 @@
         };
 
         // Notifications
-        function renderNotifications() {
+        window.renderNotifications = function () {
             const list = document.getElementById('notifications-list');
             if (notifications.length === 0) {
                 list.innerHTML = '<p class="text-center text-gray-400 py-4">Aucune notification</p>';
@@ -1146,13 +1395,13 @@
                     <p class="text-xs text-gray-500 mt-1">${formatDate(n.date)}</p>
                 </div>
             `).join('');
-        }
+        };
 
-        function updateNotificationBadge() {
+        window.updateNotificationBadge = function () {
             const unread = notifications.filter(n => !n.read).length;
             const badge = document.getElementById('nav-notif-badge');
             const count = document.getElementById('notif-count');
-            
+
             if (unread > 0) {
                 badge.textContent = unread > 9 ? '9+' : unread;
                 badge.classList.remove('hidden');
@@ -1162,9 +1411,9 @@
                 badge.classList.add('hidden');
                 count.classList.add('hidden');
             }
-        }
+        };
 
-        function addNotification(title, message, type) {
+        window.addNotification = function (title, message, type) {
             const notif = {
                 id: Date.now(),
                 title,
@@ -1176,72 +1425,49 @@
             notifications.push(notif);
             localStorage.setItem('labNotifications', JSON.stringify(notifications));
             updateNotificationBadge();
-        }
+        };
 
-        window.clearAllNotifications = function() {
+        window.clearAllNotifications = function () {
             notifications = [];
             localStorage.setItem('labNotifications', JSON.stringify(notifications));
             renderNotifications();
             updateNotificationBadge();
         };
 
-        // Export
-        window.exportToExcel = function() {
-            const data = window.alerts.map(a => ({
-                Date: formatDate(a.date),
-                Type: getTypeLabel(a.type),
-                Produit: a.productName,
-                Référence: a.reference || '-',
-                Urgence: getUrgencyLabel(a.urgency),
-                'Signalé par': a.reportedBy.firstName + ' ' + a.reportedBy.lastName,
-                Statut: a.status === 'resolved' ? 'Résolu' : 'En attente',
-                Notes: a.notes || '-'
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Signalements");
-            XLSX.writeFile(wb, `signalements_${new Date().toISOString().split('T')[0]}.xlsx`);
-            showToast('Export réussi');
-        };
-
-        // Check saved session
-        if (currentUser) {
-            document.getElementById('login-page').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-            document.getElementById('user-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur';
-            if (currentUser.isOwner) {
-                document.getElementById('owner-banner').classList.remove('hidden');
-            }
-            loadAlerts();
-        }
-
-        // Click outside dropdowns
+        // Event Listeners (Modals, close dropdowns)
         document.addEventListener('click', (e) => {
             const notifCenter = document.getElementById('notification-center');
             const notifBtn = e.target.closest('button[onclick="toggleNotifications()"]');
             const profileMenu = document.getElementById('profile-menu');
             const profileDropdown = document.getElementById('profile-dropdown');
-            
-            if (notifCenter && !notifCenter.contains(e.target) && !notifBtn && !notifCenter.classList.contains('hidden')) {
-                notifCenter.classList.add('hidden');
-            }
-            
-            if (profileMenu && !profileMenu.contains(e.target) && profileDropdown && !profileDropdown.classList.contains('hidden')) {
-                profileDropdown.classList.add('hidden');
-            }
+
+            if (notifCenter && !notifCenter.contains(e.target) && !notifBtn && !notifCenter.classList.contains('hidden')) { notifCenter.classList.add('hidden'); }
+            if (profileMenu && !profileMenu.contains(e.target) && profileDropdown && !profileDropdown.classList.contains('hidden')) { profileDropdown.classList.add('hidden'); }
         });
 
-        // Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                closeAlertModal();
-                closeAdminPanel();
-                closeOwnerModal();
+                if (window.closeAlertModal) closeAlertModal();
+                if (window.closeAdminPanel) closeAdminPanel();
+                if (window.closeOwnerModal) closeOwnerModal();
                 document.getElementById('notification-center')?.classList.add('hidden');
                 document.getElementById('profile-dropdown')?.classList.add('hidden');
             }
         });
+
+        // Initialize user Session
+        if (currentUser) {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+            document.getElementById('user-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur';
+            if (currentUser.isOwner) { document.getElementById('owner-banner').classList.remove('hidden'); }
+            // Charge les alertes via FB -> Appel ensuite la nouvelle fonction renderFilteredAlerts()
+            if (window.loadAlerts) {
+                window.loadAlerts();
+            }
+        }
     </script>
 </body>
+
 </html>
