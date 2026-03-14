@@ -14,6 +14,14 @@
     <!-- SheetJS pour Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+    <!-- PWA Manifest & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="alerte.png">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="alerte.png">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -82,6 +90,10 @@
             100% {
                 transform: translateX(-100%);
             }
+        }
+
+        .scroll-container:hover .scroll-text {
+            animation-play-state: paused;
         }
 
         .glass-panel {
@@ -245,8 +257,8 @@
             <div class="text-center mb-6">
                 <p class="text-xs creator-badge uppercase tracking-widest mb-4">Created by SOHAIB CHEKRI</p>
                 <div
-                    class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center mb-4">
-                    <i class="fas fa-bacteria text-3xl text-white"></i>
+                    class="w-20 h-20 mx-auto rounded-2xl bg-white/5 flex items-center justify-center mb-4 overflow-hidden border border-white/10">
+                    <img src="alerte.png" class="w-full h-full object-contain">
                 </div>
                 <h1 class="text-2xl font-bold">
                     <span class="gradient-text">BIOCARE-BIOTECH</span>
@@ -325,8 +337,8 @@
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="showDashboard()">
                         <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center">
-                            <i class="fas fa-bacteria text-white"></i>
+                            class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
+                            <img src="alerte.png" class="w-full h-full object-contain">
                         </div>
                         <div class="hidden sm:block">
                             <span class="font-bold text-xl gradient-text">BIOCARE-BIOTECH</span>
@@ -354,7 +366,8 @@
                                     <p class="text-sm font-medium" id="user-name"></p>
                                     <p class="text-xs text-cyan-400" id="user-role"></p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center overflow-hidden">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center overflow-hidden">
                                     <img id="nav-profile-pic" src="" class="w-full h-full object-cover hidden">
                                     <i id="nav-profile-icon" class="fas fa-user text-white"></i>
                                 </div>
@@ -433,9 +446,9 @@
                     class="absolute inset-y-0 left-0 bg-cyan-900/50 w-14 flex items-center justify-center z-10 border-r border-cyan-500/20">
                     <i class="fas fa-bullhorn text-cyan-400 text-lg"></i>
                 </div>
-                <div class="overflow-hidden flex items-center h-16 ml-12">
-                    <div class="whitespace-nowrap px-6 text-base text-cyan-100 font-semibold tracking-wide flex items-center gap-16"
-                        style="animation: scrollBanner 90s linear infinite;">
+                <div class="overflow-hidden flex items-center h-16 ml-12 scroll-container">
+                    <div class="whitespace-nowrap px-6 text-base text-cyan-100 font-semibold tracking-wide flex items-center gap-16 scroll-text"
+                        style="animation: scrollBanner 180s linear infinite;">
                         <span id="global-message-text" class="italic">Chargement des informations...</span>
                         <span id="global-message-text-clone" class="italic" aria-hidden="true">Chargement des
                             informations...</span>
@@ -461,13 +474,14 @@
                     <div class="relative w-full sm:w-64">
                         <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
                         <input type="text" id="search-input" placeholder="Rechercher (produit, réf, demandeur)..."
-                            onkeyup="loadAlerts()"
+                            onkeyup="window.renderFilteredAlerts()"
                             class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-cyan-500 text-sm placeholder-gray-500">
                     </div>
 
                     <!-- EXPORT & SORT & TYPE FILTERS -->
                     <div class="flex flex-wrap gap-2">
-                        <select id="sort-order" onchange="window.renderFilteredAlerts()" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+                        <select id="sort-order" onchange="window.renderFilteredAlerts()"
+                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
                             <option value="desc">Plus récents</option>
                             <option value="asc">Plus anciens</option>
                         </select>
@@ -536,21 +550,48 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Photo/Carte -->
                 <div class="glass-card p-6 text-center border-2 border-amber-500/30">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 overflow-hidden relative cursor-pointer group" onclick="document.getElementById('profile-pic-upload').click()">
+                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 overflow-hidden relative cursor-pointer group"
+                        onclick="document.getElementById('profile-pic-upload').click()">
                         <img id="profile-picture-preview" src="" class="w-full h-full object-cover hidden">
                         <i id="profile-picture-icon" class="fas fa-user text-4xl text-white"></i>
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div
+                            class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <i class="fas fa-camera text-white text-xl"></i>
                         </div>
                     </div>
+                    <div class="flex justify-center gap-4 mt-4">
+                        <button onclick="document.getElementById('profile-pic-camera').click()" 
+                            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-cyan-400 transition-colors"
+                            title="Prendre une photo">
+                            <i class="fas fa-camera text-xl"></i>
+                        </button>
+                        <button onclick="document.getElementById('profile-pic-upload').click()" 
+                            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-amber-400 transition-colors"
+                            title="Choisir une photo">
+                            <i class="fas fa-image text-xl"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="profile-pic-camera" accept="image/*" capture="user" class="hidden" onchange="uploadProfilePicture(event)">
                     <input type="file" id="profile-pic-upload" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
-                    <h2 class="text-xl font-bold" id="profile-name"></h2>
-                    <p class="text-amber-400 text-sm" id="profile-role"></p>
-                    <p class="text-xs creator-badge mt-4">CREATED BY SOHAIB CHEKRI</p>
+                    
+                    <p class="text-xs creator-badge mt-6">CREATED BY SOHAIB CHEKRI</p>
                 </div>
 
                 <!-- Formulaires -->
                 <div class="md:col-span-2 space-y-6">
+                    <!-- Notifications système -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold text-cyan-400 mb-4">
+                            <i class="fas fa-bell mr-2"></i>Notifications système
+                        </h3>
+                        <p class="text-sm text-gray-400 mb-4">Recevez une alerte sur votre téléphone lors d'un nouveau signalement ou d'une résolution.</p>
+                        <button id="btn-request-notif" onclick="window.requestNotificationPermission()" 
+                            class="w-full bg-white/5 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-bell"></i>
+                            <span>Activer les notifications sur ce téléphone</span>
+                        </button>
+                    </div>
+
                     <!-- Informations personnelles -->
                     <div class="glass-card p-6">
                         <h3 class="text-lg font-semibold text-amber-400 mb-4">
@@ -757,15 +798,19 @@
                     <div>
                         <label class="block text-sm mb-1 text-gray-400">Ajouter une photo (Optionnel)</label>
                         <div class="flex gap-2">
-                            <label class="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                            <label
+                                class="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                                 <i class="fas fa-camera text-2xl mb-2 text-cyan-400"></i>
                                 <span class="text-xs text-center text-gray-400">Prendre/Choisir<br>une photo</span>
-                                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="previewAlertPhoto(event)">
+                                <input type="file" accept="image/*" capture="environment" class="hidden"
+                                    onchange="previewAlertPhoto(event)">
                             </label>
                         </div>
                         <div id="alert-photo-preview-container" class="hidden mt-2 relative">
-                            <img id="alert-photo-preview" class="w-full max-h-48 object-cover rounded-xl border border-white/10" src="" />
-                            <button type="button" onclick="clearAlertPhoto()" class="absolute top-2 right-2 bg-red-500/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-500">
+                            <img id="alert-photo-preview"
+                                class="w-full max-h-48 object-cover rounded-xl border border-white/10" src="" />
+                            <button type="button" onclick="clearAlertPhoto()"
+                                class="absolute top-2 right-2 bg-red-500/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-500">
                                 <i class="fas fa-times"></i>
                             </button>
                             <input type="hidden" id="alert-photo-base64" name="photoBase64">
@@ -978,7 +1023,10 @@
             return userData.id;
         };
 
-        window.updateUserInFirestore = async (userId, updates) => { await updateDoc(doc(db, "users", userId.toString()), updates); };
+        window.updateUserInFirestore = async (userId, updates) => { 
+            // setDoc avec { merge: true } crée le document s'il n'existe pas (cas du propriétaire 999999)
+            await window.setFirebaseDoc(window.firebaseDoc(db, "users", userId.toString()), updates, { merge: true }); 
+        };
         window.deleteUserFromFirestore = async (userId) => { await deleteDoc(doc(db, "users", userId.toString())); };
         window.addAlertToFirestore = async (alertData) => { const docRef = await addDoc(collection(db, "alerts"), alertData); return docRef.id; };
         window.deleteAlertFromFirestore = async (alertId) => { await deleteDoc(doc(db, "alerts", alertId)); };
@@ -995,10 +1043,15 @@
             updateStats();
         };
 
+        let snapshotTimeout;
         onSnapshot(collection(db, "alerts"), (snapshot) => {
             window.alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            window.renderFilteredAlerts();
-            updateStats();
+            // Debounce pour éviter les sauts lors de multiples mises à jour
+            clearTimeout(snapshotTimeout);
+            snapshotTimeout = setTimeout(() => {
+                window.renderFilteredAlerts();
+                updateStats();
+            }, 100);
         });
 
         // Expose Firebase functions to window for regular scripts
@@ -1035,12 +1088,27 @@
         });
 
         // *** REAL-TIME NOTIFICATIONS via Firebase ***
-        // Listen to notifications collection: ordered by date desc
         const notifQuery = query(collection(db, "notifications"), orderBy("date", "desc"));
+        let initialLoad = true;
+
         onSnapshot(notifQuery, (snapshot) => {
             window.firebaseNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            
             if (window.updateNotificationBadge) window.updateNotificationBadge();
-            // If center is open, refresh it
+            
+            // Détection des NOUVELLES notifications pour Push Système
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added" && !initialLoad) {
+                    const n = change.doc.data();
+                    // On ne notifie pas l'auteur de l'action
+                    const isFromMe = n.message.includes(`${currentUser.firstName} ${currentUser.lastName}`);
+                    if (!isFromMe) {
+                        window.sendSystemPush(n.title, n.message);
+                    }
+                }
+            });
+            initialLoad = false;
+
             const center = document.getElementById('notification-center');
             if (center && !center.classList.contains('hidden') && window.renderNotifications) {
                 window.renderNotifications();
@@ -1140,19 +1208,19 @@
         function getUrgencyLabel(u) { const labels = { low: 'Basse', medium: 'Moyenne', high: 'Haute' }; return labels[u] || u; }
         function getSeenByArray(seenBy) { return Array.isArray(seenBy) ? seenBy : []; }
 
-        window.compressImage = function(file, maxWidth, maxHeight, quality, callback) {
+        window.compressImage = function (file, maxWidth, maxHeight, quality, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 const img = new Image();
                 img.src = event.target.result;
-                img.onload = function() {
+                img.onload = function () {
                     let width = img.width;
                     let height = img.height;
                     // Resize logic
-                    if (width > height) { if (width > maxWidth) { height = Math.round((height *= maxWidth / width)); width = maxWidth; } } 
+                    if (width > height) { if (width > maxWidth) { height = Math.round((height *= maxWidth / width)); width = maxWidth; } }
                     else { if (height > maxHeight) { width = Math.round((width *= maxHeight / height)); height = maxHeight; } }
-                    
+
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
@@ -1163,26 +1231,29 @@
             };
         };
 
-        window.updateProfileUI = function() {
+        window.updateProfileUI = function () {
             if (currentUser && currentUser.profilePic) {
                 const previews = [document.getElementById('profile-picture-preview'), document.getElementById('nav-profile-pic')];
                 const icons = [document.getElementById('profile-picture-icon'), document.getElementById('nav-profile-icon')];
                 previews.forEach(p => { if (p) { p.src = currentUser.profilePic; p.classList.remove('hidden'); } });
                 icons.forEach(i => { if (i) i.classList.add('hidden'); });
             }
+            if (window.Notification && Notification.permission === "granted") {
+                updateNotifButton(true);
+            }
         };
 
-        window.previewAlertPhoto = function(e) {
+        window.previewAlertPhoto = function (e) {
             const file = e.target.files[0];
             if (!file) return;
-            window.compressImage(file, 800, 800, 0.7, function(dataUrl) {
+            window.compressImage(file, 1200, 1200, 0.8, function (dataUrl) {
                 document.getElementById('alert-photo-preview').src = dataUrl;
                 document.getElementById('alert-photo-base64').value = dataUrl;
                 document.getElementById('alert-photo-preview-container').classList.remove('hidden');
             });
         };
 
-        window.clearAlertPhoto = function() {
+        window.clearAlertPhoto = function () {
             document.getElementById('alert-photo-preview').src = '';
             document.getElementById('alert-photo-base64').value = '';
             document.getElementById('alert-photo-preview-container').classList.add('hidden');
@@ -1238,7 +1309,7 @@
             const filteredArray = getFilteredData();
 
             // Marquage comme "Vu" pour l'utilisateur actuel
-            if (currentUser && !currentUser.isOwner) {
+            if (currentUser) {
                 filteredArray.forEach(alert => {
                     const seenBy = getSeenByArray(alert.seenBy);
                     if (!seenBy.some(u => u.id === currentUser.id)) {
@@ -1324,8 +1395,8 @@
                                     </div>` : ''}
 
                                     ${alert.photo ? `
-                                    <div class="mt-4">
-                                        <img src="${alert.photo}" class="w-full max-h-96 object-contain bg-black/20 rounded-xl border border-white/10" />
+                                    <div class="mt-4 rounded-xl overflow-hidden bg-black/20 border border-white/10" style="aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;">
+                                        <img src="${alert.photo}" class="w-full h-full object-contain" loading="lazy" />
                                     </div>` : ''}
                                 </div>
                             </div>
@@ -1634,7 +1705,7 @@
         window.closeAlertModal = function () {
             document.getElementById('alert-modal').classList.add('hidden');
             document.getElementById('alert-form').reset();
-            if(window.clearAlertPhoto) window.clearAlertPhoto();
+            if (window.clearAlertPhoto) window.clearAlertPhoto();
         };
 
         window.submitAlert = async function (e) {
@@ -1738,10 +1809,10 @@
             }
         };
 
-        window.uploadProfilePicture = function(e) {
+        window.uploadProfilePicture = function (e) {
             const file = e.target.files[0];
             if (!file) return;
-            window.compressImage(file, 400, 400, 0.7, async function(dataUrl) {
+            window.compressImage(file, 800, 800, 0.8, async function (dataUrl) {
                 try {
                     await window.updateUserInFirestore(currentUser.id, { profilePic: dataUrl });
                     currentUser.profilePic = dataUrl;
@@ -1948,6 +2019,44 @@
             renderNotifications();
         };
 
+        // Logic for Browser System Notifications
+        window.requestNotificationPermission = async function() {
+            if (!("Notification" in window)) {
+                showToast("Votre navigateur ne supporte pas les notifications.", true);
+                return;
+            }
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                showToast("Notifications activées !");
+                updateNotifButton(true);
+            } else {
+                showToast("Notifications refusées.", true);
+            }
+        };
+
+        window.sendSystemPush = function(title, message) {
+            if (Notification.permission === "granted") {
+                const options = {
+                    body: message,
+                    icon: 'alerte.png',
+                    badge: 'alerte.png',
+                    vibrate: [200, 100, 200]
+                };
+                new Notification(title, options);
+            }
+        };
+
+        function updateNotifButton(granted) {
+            const btn = document.getElementById('btn-request-notif');
+            if (btn) {
+                if (granted) {
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Notifications activées';
+                    btn.className = "w-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-6 py-3 rounded-xl flex items-center justify-center gap-2 cursor-default";
+                    btn.onclick = null;
+                }
+            }
+        }
+
         // Event Listeners (Modals, close dropdowns)
         document.addEventListener('click', (e) => {
             const notifCenter = document.getElementById('notification-center');
@@ -1978,11 +2087,20 @@
             document.getElementById('user-role').textContent = currentUser.role?.replace('_', ' ') || 'Utilisateur';
             if (currentUser.isOwner) { document.getElementById('owner-banner').classList.remove('hidden'); }
             window.updateProfileUI();
-            
+
             // Charge les alertes via FB -> Appel ensuite la nouvelle fonction renderFilteredAlerts()
             if (window.loadAlerts) {
                 window.loadAlerts();
             }
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
         }
     </script>
 </body>
