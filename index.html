@@ -257,7 +257,8 @@
     <div id="updates-modal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 modal-overlay" onclick="closeUpdatesModal()"></div>
         <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div class="glass-card bg-gray-900 w-full max-w-lg border border-amber-500/30 overflow-hidden shadow-2xl">
+            <div class="glass-card bg-gray-900 w-full max-w-xl border border-amber-500/30 overflow-hidden shadow-2xl">
+                <!-- Header -->
                 <div class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
@@ -268,56 +269,42 @@
                             <p class="text-xs text-gray-400">Dernières mises à jour système</p>
                         </div>
                     </div>
-                    <button onclick="closeUpdatesModal()" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    <div class="space-y-4">
-                        <div class="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all">
-                            <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
-                                <i class="fas fa-paper-plane text-cyan-400"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-cyan-400">Rapports WhatsApp & Email Directs</h4>
-                                <p class="text-sm text-gray-400 leading-relaxed">Génération automatique d'un rapport textuel complet au style tableau directement dans votre messagerie. Plus besoin de fichiers Excel/PDF.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all">
-                            <div class="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
-                                <i class="fas fa-mouse-pointer text-violet-400"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-violet-400">Barre d'Action Flottante</h4>
-                                <p class="text-sm text-gray-400 leading-relaxed">Le bouton "Envoyer" reste désormais affiché en bas de l'écran lors du défilement pour un accès permanent sans remonter en haut.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all">
-                            <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
-                                <i class="fas fa-shield-alt text-rose-400"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-rose-400">Alerte Anti-Doublon</h4>
-                                <p class="text-sm text-gray-400 leading-relaxed">Validation intelligente lors du signalement si le produit est déjà en attente ou a déjà été envoyé au responsable.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all">
-                            <div class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-                                <i class="fas fa-eye text-teal-400"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-teal-400">Indicateurs de Suivi</h4>
-                                <p class="text-sm text-gray-400 leading-relaxed">Badges "Envoyé" et bordures cyan pour identifier immédiatement les produits déjà traités par la direction.</p>
-                            </div>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Edit button - Owner only -->
+                        <button id="edit-updates-btn" onclick="showUpdatesEditor()" class="hidden text-xs bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all">
+                            <i class="fas fa-pencil-alt mr-1"></i> Modifier
+                        </button>
+                        <button onclick="closeUpdatesModal()" class="text-gray-400 hover:text-white transition-colors ml-2">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
                     </div>
+                </div>
 
-                    <div class="pt-6 border-t border-white/10 text-center">
+                <!-- View Mode -->
+                <div id="updates-view-mode" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div id="updates-list-container" class="space-y-4">
+                        <!-- Dynamically rendered -->
+                    </div>
+                    <div class="pt-4 border-t border-white/10">
                         <button onclick="closeUpdatesModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-xl font-bold transition-all w-full">
                             Compris, merci !
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Edit Mode (Owner only) -->
+                <div id="updates-edit-mode" class="hidden p-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                    <p class="text-xs text-amber-400 mb-4"><i class="fas fa-info-circle mr-1"></i>Modifiez les nouveautés ci-dessous. Utilisez l'icône pour changer la couleur/icône.</p>
+                    <div id="updates-editor-items" class="space-y-3"></div>
+                    <button onclick="addUpdateItem()" class="mt-4 w-full border border-dashed border-white/20 hover:border-amber-500/50 text-gray-400 hover:text-amber-400 py-2.5 rounded-xl text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>Ajouter une nouveauté
+                    </button>
+                    <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+                        <button onclick="hideUpdatesEditor()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3 transition-colors">
+                            Annuler
+                        </button>
+                        <button onclick="saveUpdates()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl py-3 font-bold transition-all">
+                            <i class="fas fa-save mr-2"></i>Sauvegarder
                         </button>
                     </div>
                 </div>
@@ -1115,11 +1102,14 @@
                             <h3 class="font-bold text-emerald-400">WhatsApp</h3>
                         </div>
                         <div class="space-y-3">
-                            <input type="text" id="send-phone" placeholder="Numéro de téléphone (ex: 213...)" 
-                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm">
+                            <div class="relative">
+                                <input type="text" id="send-phone" placeholder="Numéro (optionnel, ex: 213...)" 
+                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm">
+                                <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">Laissez vide pour choisir le contact dans WhatsApp</p>
+                            </div>
                             <button onclick="sendViaWhatsApp()" 
                                 class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-3 font-semibold transition-all">
-                                <i class="fab fa-whatsapp mr-2"></i>Envoyer par WhatsApp
+                                <i class="fab fa-whatsapp mr-2"></i>Envoyer / Choisir contact
                             </button>
                         </div>
                     </div>
@@ -1445,9 +1435,8 @@
         }
 
         window.sendViaWhatsApp = async function() {
-            const phone = document.getElementById('send-phone').value.replace(/\D/g, '');
-            if (!phone) { showToast("Veuillez entrer un numéro de téléphone", true); return; }
-            localStorage.setItem('lastManagerPhone', phone);
+            const phoneInput = document.getElementById('send-phone').value.trim();
+            const phone = phoneInput.replace(/\D/g, '');
             
             const selectedData = window.alerts.filter(a => window.selectedAlerts.includes(a.id));
             if (selectedData.length === 0) return;
@@ -1468,8 +1457,15 @@
             
             message += `\n_Généré par: ${currentUser.firstName} ${currentUser.lastName}_`;
             
-            // 2. Open WhatsApp
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+            // 2. Open WhatsApp (With or without phone number)
+            let whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            
+            if (phone) {
+                whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                localStorage.setItem('lastManagerPhone', phone);
+            }
+            
+            window.open(whatsappUrl, '_blank');
             markSelectedAsSent();
         };
 
@@ -1555,11 +1551,119 @@
         function getSeenByArray(seenBy) { return Array.isArray(seenBy) ? seenBy : []; }
 
         // --- GESTION DES MISES À JOUR (MODAL) ---
+        let currentUpdates = [];
+        const ICON_COLORS = [
+            { icon: 'paper-plane', color: 'cyan' }, { icon: 'rocket', color: 'amber' },
+            { icon: 'shield-alt', color: 'rose' }, { icon: 'eye', color: 'teal' },
+            { icon: 'code', color: 'violet' }, { icon: 'chart-bar', color: 'indigo' },
+            { icon: 'bell', color: 'yellow' }, { icon: 'star', color: 'orange' },
+            { icon: 'wrench', color: 'green' }, { icon: 'lock', color: 'red' },
+        ];
+
+        const DEFAULT_UPDATES = [
+            { icon: 'paper-plane', color: 'cyan', title: 'Rapports WhatsApp & Email Directs', desc: "Génération automatique d'un rapport textuel complet au style tableau directement dans votre messagerie. Plus besoin de fichiers Excel/PDF." },
+            { icon: 'mouse-pointer', color: 'violet', title: "Barre d'Action Flottante", desc: 'Le bouton "Envoyer" reste désormais affiché en bas de l\'écran lors du défilement pour un accès permanent sans remonter en haut.' },
+            { icon: 'shield-alt', color: 'rose', title: 'Alerte Anti-Doublon', desc: 'Validation intelligente lors du signalement si le produit est déjà en attente ou a déjà été envoyé au responsable.' },
+            { icon: 'eye', color: 'teal', title: 'Indicateurs de Suivi', desc: 'Badges "Envoyé" et bordures cyan pour identifier immédiatement les produits déjà traités par la direction.' },
+        ];
+
+        function renderUpdatesList(items) {
+            const container = document.getElementById('updates-list-container');
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-8">Aucune nouveauté pour le moment.</p>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-${item.color}-500/20 flex items-center justify-center shrink-0">
+                        <i class="fas fa-${item.icon} text-${item.color}-400"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-${item.color}-400">${item.title}</h4>
+                        <p class="text-sm text-gray-400 leading-relaxed">${item.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderUpdatesEditor(items) {
+            const container = document.getElementById('updates-editor-items');
+            container.innerHTML = items.map((item, i) => `
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2" id="update-item-${i}">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Nouveauté ${i+1}</span>
+                        <button onclick="removeUpdateItem(${i})" class="text-red-400 hover:text-red-300 text-xs">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="flex gap-2">
+                        <select onchange="updateItemField(${i},'color',this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-xs text-gray-300 focus:outline-none">
+                            ${['cyan','violet','rose','teal','amber','indigo','yellow','orange','green','red'].map(c => `<option value="${c}" ${item.color===c?'selected':''}>${c}</option>`).join('')}
+                        </select>
+                        <select onchange="updateItemField(${i},'icon',this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-xs text-gray-300 focus:outline-none flex-1">
+                            ${['paper-plane','rocket','shield-alt','eye','code','chart-bar','bell','star','wrench','lock','mouse-pointer','cloud','cogs','users','check-circle'].map(ic => `<option value="${ic}" ${item.icon===ic?'selected':''}>${ic}</option>`).join('')}
+                        </select>
+                    </div>
+                    <input type="text" value="${item.title}" onchange="updateItemField(${i},'title',this.value)" placeholder="Titre" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500">
+                    <textarea rows="2" onchange="updateItemField(${i},'desc',this.value)" placeholder="Description" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-amber-500">${item.desc}</textarea>
+                </div>
+            `).join('');
+        }
+
         window.openUpdatesModal = function() {
             document.getElementById('updates-modal').classList.remove('hidden');
+            document.getElementById('updates-view-mode').classList.remove('hidden');
+            document.getElementById('updates-edit-mode').classList.add('hidden');
+            // Show edit btn for owner only
+            const editBtn = document.getElementById('edit-updates-btn');
+            if (editBtn && currentUser && currentUser.isOwner) {
+                editBtn.classList.remove('hidden');
+            }
         };
         window.closeUpdatesModal = function() {
             document.getElementById('updates-modal').classList.add('hidden');
+        };
+        window.showUpdatesEditor = function() {
+            renderUpdatesEditor(currentUpdates);
+            document.getElementById('updates-view-mode').classList.add('hidden');
+            document.getElementById('updates-edit-mode').classList.remove('hidden');
+        };
+        window.hideUpdatesEditor = function() {
+            document.getElementById('updates-edit-mode').classList.add('hidden');
+            document.getElementById('updates-view-mode').classList.remove('hidden');
+        };
+        window.updateItemField = function(index, field, value) {
+            currentUpdates[index][field] = value;
+        };
+        window.removeUpdateItem = function(index) {
+            currentUpdates.splice(index, 1);
+            renderUpdatesEditor(currentUpdates);
+        };
+        window.addUpdateItem = function() {
+            currentUpdates.push({ icon: 'star', color: 'amber', title: 'Nouvelle fonctionnalité', desc: 'Description...' });
+            renderUpdatesEditor(currentUpdates);
+        };
+        window.saveUpdates = async function() {
+            try {
+                await window.setFirebaseDoc(window.firebaseDoc(window.db, 'settings', 'updates'), { items: currentUpdates }, { merge: true });
+                renderUpdatesList(currentUpdates);
+                hideUpdatesEditor();
+                showToast('Nouveautés mises à jour !');
+            } catch(e) {
+                showToast('Erreur: ' + e.message, true);
+            }
+        };
+
+        // Load updates from Firebase on startup
+        window.loadUpdatesFromFirebase = async function() {
+            try {
+                const snap = await window.getDocs(window.dbQuery(window.dbCollection(window.db, 'settings')));
+                const doc = snap.docs.find(d => d.id === 'updates');
+                currentUpdates = (doc && doc.data().items) ? doc.data().items : DEFAULT_UPDATES;
+            } catch(e) {
+                currentUpdates = DEFAULT_UPDATES;
+            }
+            renderUpdatesList(currentUpdates);
         };
 
         window.compressImage = function (file, maxWidth, maxHeight, quality, callback) {
@@ -2026,6 +2130,7 @@
                     }
                     window.updateProfileUI();
                     if (window.loadAlerts) window.loadAlerts();
+                    if (window.loadUpdatesFromFirebase) window.loadUpdatesFromFirebase();
                 } else {
                     showToast('Email ou mot de passe incorrect', true);
                 }
@@ -2058,6 +2163,7 @@
                 document.getElementById('owner-banner').classList.remove('hidden');
                 window.updateProfileUI();
                 if (window.loadAlerts) window.loadAlerts();
+                if (window.loadUpdatesFromFirebase) window.loadUpdatesFromFirebase();
             } else {
                 showToast('Mot de passe incorrect', true);
             }
@@ -2460,6 +2566,10 @@
             if (window.loadAlerts) {
                 window.loadAlerts();
             }
+            // Charge les nouveautés (Firebase)
+            setTimeout(() => {
+                if (window.loadUpdatesFromFirebase) window.loadUpdatesFromFirebase();
+            }, 800);
         }
 
         // Register Service Worker for PWA
