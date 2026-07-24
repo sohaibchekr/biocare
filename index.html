@@ -259,7 +259,8 @@
         <div class="absolute inset-0 flex items-center justify-center p-4">
             <div class="glass-card bg-gray-900 w-full max-w-xl border border-amber-500/30 overflow-hidden shadow-2xl">
                 <!-- Header -->
-                <div class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20 flex justify-between items-center">
+                <div
+                    class="p-6 border-b border-white/10 bg-gradient-to-r from-amber-500/20 to-orange-500/20 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center">
                             <i class="fas fa-rocket text-white"></i>
@@ -271,10 +272,12 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <!-- Edit button - Owner only -->
-                        <button id="edit-updates-btn" onclick="showUpdatesEditor()" class="hidden text-xs bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all">
+                        <button id="edit-updates-btn" onclick="showUpdatesEditor()"
+                            class="hidden text-xs bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-all">
                             <i class="fas fa-pencil-alt mr-1"></i> Modifier
                         </button>
-                        <button onclick="closeUpdatesModal()" class="text-gray-400 hover:text-white transition-colors ml-2">
+                        <button onclick="closeUpdatesModal()"
+                            class="text-gray-400 hover:text-white transition-colors ml-2">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
@@ -286,7 +289,8 @@
                         <!-- Dynamically rendered -->
                     </div>
                     <div class="pt-4 border-t border-white/10">
-                        <button onclick="closeUpdatesModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-xl font-bold transition-all w-full">
+                        <button onclick="closeUpdatesModal()"
+                            class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-xl font-bold transition-all w-full">
                             Compris, merci !
                         </button>
                     </div>
@@ -294,16 +298,20 @@
 
                 <!-- Edit Mode (Owner only) -->
                 <div id="updates-edit-mode" class="hidden p-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                    <p class="text-xs text-amber-400 mb-4"><i class="fas fa-info-circle mr-1"></i>Modifiez les nouveautés ci-dessous. Utilisez l'icône pour changer la couleur/icône.</p>
+                    <p class="text-xs text-amber-400 mb-4"><i class="fas fa-info-circle mr-1"></i>Modifiez les
+                        nouveautés ci-dessous. Utilisez l'icône pour changer la couleur/icône.</p>
                     <div id="updates-editor-items" class="space-y-3"></div>
-                    <button onclick="addUpdateItem()" class="mt-4 w-full border border-dashed border-white/20 hover:border-amber-500/50 text-gray-400 hover:text-amber-400 py-2.5 rounded-xl text-sm transition-all">
+                    <button onclick="addUpdateItem()"
+                        class="mt-4 w-full border border-dashed border-white/20 hover:border-amber-500/50 text-gray-400 hover:text-amber-400 py-2.5 rounded-xl text-sm transition-all">
                         <i class="fas fa-plus mr-2"></i>Ajouter une nouveauté
                     </button>
                     <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
-                        <button onclick="hideUpdatesEditor()" class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3 transition-colors">
+                        <button onclick="hideUpdatesEditor()"
+                            class="flex-1 bg-white/5 hover:bg-white/10 rounded-xl py-3 transition-colors">
                             Annuler
                         </button>
-                        <button onclick="saveUpdates()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl py-3 font-bold transition-all">
+                        <button onclick="saveUpdates()"
+                            class="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl py-3 font-bold transition-all">
                             <i class="fas fa-save mr-2"></i>Sauvegarder
                         </button>
                     </div>
@@ -398,8 +406,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="showDashboard()">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
                             <img src="alerte.png" class="w-full h-full object-contain">
                         </div>
                         <div class="hidden sm:block">
@@ -415,7 +422,7 @@
                             <span class="hidden sm:inline">Signaler</span>
                         </button>
 
-                        <button onclick="openUpdatesModal()" 
+                        <button onclick="openUpdatesModal()"
                             class="bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
                             <i class="fas fa-rocket"></i>
                             <span class="hidden sm:inline">Nouveautés</span>
@@ -484,7 +491,7 @@
                         <h2 class="text-2xl font-bold text-white whitespace-nowrap">SOHAIB CHEKRI</h2>
                         <p
                             class="text-amber-400 font-medium tracking-wide text-xs md:text-sm uppercase whitespace-nowrap">
-                            Propriétaire - BIOCARE</p>
+                            Propriétaire - MES ALERTE</p>
                     </div>
                 </div>
 
@@ -568,181 +575,194 @@
                         </button>
                     </div>
 
-                <!-- Floating Send Bar (Visible when items selected) -->
-                <div id="send-button-container" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-gray-900/40 backdrop-blur-xl border border-cyan-500/30 p-4 rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in-up">
-                    <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider mr-2 hidden md:block">
-                        <i class="fas fa-check-double mr-1"></i> Sélectionné
-                    </div>
-                    <button onclick="openSendModal()" class="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95">
-                        <i class="fas fa-paper-plane"></i>
-                        Envoyer <span id="selected-count-badge" class="bg-white/20 px-2 py-0.5 rounded text-xs ml-1">0</span>
-                    </button>
-                    <button onclick="selectAllAlerts(false)" class="bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-xl font-bold transition-all" title="Désélectionner tout">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                        <select id="filter-type" onchange="loadAlerts()"
-                            class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
-                            <option value="all">Tous les types</option>
-                            <option value="missing">Manquants</option>
-                            <option value="outofstock">Stock épuisé</option>
-                            <option value="expired">Périmés</option>
-                            <option value="damaged">Endommagé</option>
-                            <option value="resolved">Résolus</option>
-                            <option value="other">Autre</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                <div class="glass-card p-4 text-center border-t-cyan-500 border-t-2 cursor-pointer hover:bg-white/10 transition-colors"
-                    onclick="setFilter('all')">
-                    <h3 class="text-2xl font-bold" id="stat-total">0</h3>
-                    <p class="text-gray-400 text-xs mt-1">Éléments Affichés</p>
-                </div>
-                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
-                    onclick="setFilter('missing')">
-                    <h3 class="text-2xl font-bold text-orange-400" id="stat-missing">0</h3>
-                    <p class="text-gray-400 text-xs">Manquants</p>
-                </div>
-                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
-                    onclick="setFilter('outofstock')">
-                    <h3 class="text-2xl font-bold text-rose-400" id="stat-outofstock">0</h3>
-                    <p class="text-gray-400 text-xs">Stock épuisé</p>
-                </div>
-                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
-                    onclick="setFilter('expired')">
-                    <h3 class="text-2xl font-bold text-yellow-400" id="stat-expired">0</h3>
-                    <p class="text-gray-400 text-xs">Périmés</p>
-                </div>
-                <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
-                    onclick="setFilter('resolved')">
-                    <h3 class="text-2xl font-bold text-emerald-400" id="stat-resolved">0</h3>
-                    <p class="text-gray-400 text-xs">Résolus</p>
-                </div>
-            </div>
-
-            <!-- Alerts Container -->
-            <div id="alerts-container" class="space-y-4"></div>
-        </main>
-
-        <!-- Profile Section avec changement de mot de passe -->
-        <main id="profile-section" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex items-center gap-4 mb-8">
-                <button onclick="showDashboard()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-arrow-left text-xl"></i>
-                </button>
-                <h1 class="text-3xl font-bold">Mon profil</h1>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Photo/Carte -->
-                <div class="glass-card p-6 text-center border-2 border-amber-500/30">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 overflow-hidden relative cursor-pointer group"
-                        onclick="document.getElementById('profile-pic-upload').click()">
-                        <img id="profile-picture-preview" src="" class="w-full h-full object-cover hidden">
-                        <i id="profile-picture-icon" class="fas fa-user text-4xl text-white"></i>
-                        <div
-                            class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i class="fas fa-camera text-white text-xl"></i>
+                    <!-- Floating Send Bar (Visible when items selected) -->
+                    <div id="send-button-container"
+                        class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-gray-900/40 backdrop-blur-xl border border-cyan-500/30 p-4 rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in-up">
+                        <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider mr-2 hidden md:block">
+                            <i class="fas fa-check-double mr-1"></i> Sélectionné
                         </div>
-                    </div>
-                    <div class="flex justify-center gap-4 mt-4">
-                        <button onclick="document.getElementById('profile-pic-camera').click()" 
-                            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-cyan-400 transition-colors"
-                            title="Prendre une photo">
-                            <i class="fas fa-camera text-xl"></i>
+                        <button onclick="window.deleteSelectedAlerts()"
+                            class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95"
+                            title="Supprimer la sélection">
+                            <i class="fas fa-trash"></i>
+                            <span class="hidden md:inline">Supprimer</span>
                         </button>
-                        <button onclick="document.getElementById('profile-pic-upload').click()" 
-                            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-amber-400 transition-colors"
-                            title="Choisir une photo">
-                            <i class="fas fa-image text-xl"></i>
+                        <button onclick="openSendModal()"
+                            class="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95">
+                            <i class="fas fa-paper-plane"></i>
+                            Envoyer <span id="selected-count-badge"
+                                class="bg-white/20 px-2 py-0.5 rounded text-xs ml-1">0</span>
                         </button>
-                    </div>
-                    <input type="file" id="profile-pic-camera" accept="image/*" capture="user" class="hidden" onchange="uploadProfilePicture(event)">
-                    <input type="file" id="profile-pic-upload" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
-                    
-                    <p class="text-xs creator-badge mt-6">CREATED BY SOHAIB CHEKRI</p>
-                </div>
-
-                <!-- Formulaires -->
-                <div class="md:col-span-2 space-y-6">
-                    <!-- Notifications système -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-lg font-semibold text-cyan-400 mb-4">
-                            <i class="fas fa-bell mr-2"></i>Notifications système
-                        </h3>
-                        <p class="text-sm text-gray-400 mb-4">Recevez une alerte sur votre téléphone lors d'un nouveau signalement ou d'une résolution.</p>
-                        <button id="btn-request-notif" onclick="window.requestNotificationPermission()" 
-                            class="w-full bg-white/5 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-bell"></i>
-                            <span>Activer les notifications sur ce téléphone</span>
+                        <button onclick="deselectAllAlerts()"
+                            class="bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-xl font-bold transition-all"
+                            title="Désélectionner tout">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
 
-                    <!-- Informations personnelles -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-lg font-semibold text-amber-400 mb-4">
-                            <i class="fas fa-id-card mr-2"></i>Informations personnelles
-                        </h3>
-                        <form id="profile-form" onsubmit="updateProfile(event)" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <input type="text" id="edit-firstname" name="firstName" placeholder="Prénom" required
-                                    class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
-                                <input type="text" id="edit-lastname" name="lastName" placeholder="Nom" required
-                                    class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
-                            </div>
-                            <input type="email" id="edit-email" name="email" placeholder="Email" required
-                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
-                            <button type="submit"
-                                class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl">
-                                <i class="fas fa-save mr-2"></i>Enregistrer
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Changer le mot de passe -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-lg font-semibold text-violet-400 mb-4">
-                            <i class="fas fa-lock mr-2"></i>Changer le mot de passe
-                        </h3>
-                        <form id="password-form" onsubmit="changePassword(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Mot de passe actuel</label>
-                                <input type="password" name="currentPassword" required
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Nouveau mot de passe</label>
-                                <input type="password" name="newPassword" required minlength="6"
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Confirmer le nouveau mot de
-                                    passe</label>
-                                <input type="password" name="confirmPassword" required
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
-                            </div>
-                            <button type="submit"
-                                class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl">
-                                <i class="fas fa-key mr-2"></i>Changer le mot de passe
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Mes signalements -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-lg font-semibold text-emerald-400 mb-4">
-                            <i class="fas fa-history mr-2"></i>Mes signalements
-                        </h3>
-                        <div id="my-alerts-list" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
-                    </div>
+                    <select id="filter-type" onchange="loadAlerts()"
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+                        <option value="all">Tous les types</option>
+                        <option value="missing">Manquants</option>
+                        <option value="outofstock">Stock épuisé</option>
+                        <option value="expired">Périmés</option>
+                        <option value="damaged">Endommagé</option>
+                        <option value="resolved">Résolus</option>
+                        <option value="other">Autre</option>
+                    </select>
                 </div>
             </div>
-        </main>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div class="glass-card p-4 text-center border-t-cyan-500 border-t-2 cursor-pointer hover:bg-white/10 transition-colors"
+            onclick="setFilter('all')">
+            <h3 class="text-2xl font-bold" id="stat-total">0</h3>
+            <p class="text-gray-400 text-xs mt-1">Éléments Affichés</p>
+        </div>
+        <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+            onclick="setFilter('missing')">
+            <h3 class="text-2xl font-bold text-orange-400" id="stat-missing">0</h3>
+            <p class="text-gray-400 text-xs">Manquants</p>
+        </div>
+        <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+            onclick="setFilter('outofstock')">
+            <h3 class="text-2xl font-bold text-rose-400" id="stat-outofstock">0</h3>
+            <p class="text-gray-400 text-xs">Stock épuisé</p>
+        </div>
+        <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+            onclick="setFilter('expired')">
+            <h3 class="text-2xl font-bold text-yellow-400" id="stat-expired">0</h3>
+            <p class="text-gray-400 text-xs">Périmés</p>
+        </div>
+        <div class="glass-card p-4 text-center cursor-pointer hover:bg-white/10 transition-colors"
+            onclick="setFilter('resolved')">
+            <h3 class="text-2xl font-bold text-emerald-400" id="stat-resolved">0</h3>
+            <p class="text-gray-400 text-xs">Résolus</p>
+        </div>
+    </div>
+
+    <!-- Alerts Container -->
+    <div id="alerts-container" class="space-y-4"></div>
+    </main>
+
+    <!-- Profile Section avec changement de mot de passe -->
+    <main id="profile-section" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center gap-4 mb-8">
+            <button onclick="showDashboard()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            <h1 class="text-3xl font-bold">Mon profil</h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Photo/Carte -->
+            <div class="glass-card p-6 text-center border-2 border-amber-500/30">
+                <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4 overflow-hidden relative cursor-pointer group"
+                    onclick="document.getElementById('profile-pic-upload').click()">
+                    <img id="profile-picture-preview" src="" class="w-full h-full object-cover hidden">
+                    <i id="profile-picture-icon" class="fas fa-user text-4xl text-white"></i>
+                    <div
+                        class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-camera text-white text-xl"></i>
+                    </div>
+                </div>
+                <div class="flex justify-center gap-4 mt-4">
+                    <button onclick="document.getElementById('profile-pic-camera').click()"
+                        class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-cyan-400 transition-colors"
+                        title="Prendre une photo">
+                        <i class="fas fa-camera text-xl"></i>
+                    </button>
+                    <button onclick="document.getElementById('profile-pic-upload').click()"
+                        class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 text-amber-400 transition-colors"
+                        title="Choisir une photo">
+                        <i class="fas fa-image text-xl"></i>
+                    </button>
+                </div>
+                <input type="file" id="profile-pic-camera" accept="image/*" capture="user" class="hidden"
+                    onchange="uploadProfilePicture(event)">
+                <input type="file" id="profile-pic-upload" accept="image/*" class="hidden"
+                    onchange="uploadProfilePicture(event)">
+
+                <p class="text-xs creator-badge mt-6">CREATED BY SOHAIB CHEKRI</p>
+            </div>
+
+            <!-- Formulaires -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Notifications système -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-cyan-400 mb-4">
+                        <i class="fas fa-bell mr-2"></i>Notifications système
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Recevez une alerte sur votre téléphone lors d'un nouveau
+                        signalement ou d'une résolution.</p>
+                    <button id="btn-request-notif" onclick="window.requestNotificationPermission()"
+                        class="w-full bg-white/5 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-bell"></i>
+                        <span>Activer les notifications sur ce téléphone</span>
+                    </button>
+                </div>
+
+                <!-- Informations personnelles -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-amber-400 mb-4">
+                        <i class="fas fa-id-card mr-2"></i>Informations personnelles
+                    </h3>
+                    <form id="profile-form" onsubmit="updateProfile(event)" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="edit-firstname" name="firstName" placeholder="Prénom" required
+                                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
+                            <input type="text" id="edit-lastname" name="lastName" placeholder="Nom" required
+                                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <input type="email" id="edit-email" name="email" placeholder="Email" required
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500">
+                        <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Changer le mot de passe -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-violet-400 mb-4">
+                        <i class="fas fa-lock mr-2"></i>Changer le mot de passe
+                    </h3>
+                    <form id="password-form" onsubmit="changePassword(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Mot de passe actuel</label>
+                            <input type="password" name="currentPassword" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Nouveau mot de passe</label>
+                            <input type="password" name="newPassword" required minlength="6"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Confirmer le nouveau mot de
+                                passe</label>
+                            <input type="password" name="confirmPassword" required
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500">
+                        </div>
+                        <button type="submit"
+                            class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-6 py-3 rounded-xl">
+                            <i class="fas fa-key mr-2"></i>Changer le mot de passe
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Mes signalements -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold text-emerald-400 mb-4">
+                        <i class="fas fa-history mr-2"></i>Mes signalements
+                    </h3>
+                    <div id="my-alerts-list" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
+                </div>
+            </div>
+        </div>
+    </main>
     </div>
 
     <!-- Admin Panel -->
@@ -853,6 +873,9 @@
                     <input type="text" name="reference" placeholder="Référence (optionnel)"
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
 
+                    <input type="text" name="reportedTo" placeholder="Destinataire (À qui signaler ?)"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+
                     <div>
                         <label class="block text-sm mb-1 text-gray-400">Date de péremption (optionnel)</label>
                         <input type="date" name="expirationDate"
@@ -893,7 +916,7 @@
                                 class="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                                 <i class="fas fa-camera text-2xl mb-2 text-cyan-400"></i>
                                 <span class="text-xs text-center text-gray-400">Prendre/Choisir<br>une photo</span>
-                                <input type="file" accept="image/*" capture="environment" class="hidden"
+                                <input type="file" accept="image/*" class="hidden"
                                     onchange="previewAlertPhoto(event)">
                             </label>
                         </div>
@@ -1026,6 +1049,9 @@
                     <input type="text" id="edit-reference" name="reference" placeholder="Référence (optionnel)"
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
 
+                    <input type="text" id="edit-reported-to" name="reportedTo" placeholder="Destinataire (À qui signaler ?)"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500">
+
                     <div>
                         <label class="block text-sm mb-1 text-gray-400">Date de péremption (optionnel)</label>
                         <input type="date" id="edit-expiration" name="expirationDate"
@@ -1084,8 +1110,10 @@
             <div class="glass-card bg-gray-900 w-full max-w-lg p-6 border-2 border-cyan-500/30">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-xl font-bold text-cyan-400"><i class="fas fa-paper-plane mr-2"></i>Envoyer la sélection</h2>
-                        <p class="text-xs text-gray-400 mt-1">Envoyer l'état des <span id="send-modal-count" class="font-bold text-white">0</span> produits sélectionnés</p>
+                        <h2 class="text-xl font-bold text-cyan-400"><i class="fas fa-paper-plane mr-2"></i>Envoyer la
+                            sélection</h2>
+                        <p class="text-xs text-gray-400 mt-1">Envoyer l'état des <span id="send-modal-count"
+                                class="font-bold text-white">0</span> produits sélectionnés</p>
                     </div>
                     <button onclick="closeSendModal()" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times text-xl"></i>
@@ -1096,18 +1124,20 @@
                     <!-- WhatsApp Section -->
                     <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
                                 <i class="fab fa-whatsapp text-2xl"></i>
                             </div>
                             <h3 class="font-bold text-emerald-400">WhatsApp</h3>
                         </div>
                         <div class="space-y-3">
                             <div class="relative">
-                                <input type="text" id="send-phone" placeholder="Numéro (optionnel, ex: 213...)" 
+                                <input type="text" id="send-phone" placeholder="Numéro (optionnel, ex: 213...)"
                                     class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm">
-                                <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">Laissez vide pour choisir le contact dans WhatsApp</p>
+                                <p class="text-[10px] text-gray-500 mt-1 ml-1 italic">Laissez vide pour choisir le
+                                    contact dans WhatsApp</p>
                             </div>
-                            <button onclick="sendViaWhatsApp()" 
+                            <button onclick="sendViaWhatsApp()"
                                 class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-3 font-semibold transition-all">
                                 <i class="fab fa-whatsapp mr-2"></i>Envoyer / Choisir contact
                             </button>
@@ -1117,15 +1147,16 @@
                     <!-- Email Section -->
                     <div class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-5">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
                                 <i class="fas fa-envelope text-2xl"></i>
                             </div>
                             <h3 class="font-bold text-blue-400">E-mail</h3>
                         </div>
                         <div class="space-y-3">
-                            <input type="email" id="send-email" placeholder="Adresse e-mail du responsable" 
+                            <input type="email" id="send-email" placeholder="Adresse e-mail du responsable"
                                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm">
-                            <button onclick="sendViaEmail()" 
+                            <button onclick="sendViaEmail()"
                                 class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 font-semibold transition-all">
                                 <i class="fas fa-envelope mr-2"></i>Envoyer par E-mail
                             </button>
@@ -1171,9 +1202,9 @@
             return userData.id;
         };
 
-        window.updateUserInFirestore = async (userId, updates) => { 
+        window.updateUserInFirestore = async (userId, updates) => {
             // setDoc avec { merge: true } crée le document s'il n'existe pas (cas du propriétaire 999999)
-            await window.setFirebaseDoc(window.firebaseDoc(db, "users", userId.toString()), updates, { merge: true }); 
+            await window.setFirebaseDoc(window.firebaseDoc(db, "users", userId.toString()), updates, { merge: true });
         };
         window.deleteUserFromFirestore = async (userId) => { await deleteDoc(doc(db, "users", userId.toString())); };
         window.addAlertToFirestore = async (alertData) => { const docRef = await addDoc(collection(db, "alerts"), alertData); return docRef.id; };
@@ -1241,9 +1272,9 @@
 
         onSnapshot(notifQuery, (snapshot) => {
             window.firebaseNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            
+
             if (window.updateNotificationBadge) window.updateNotificationBadge();
-            
+
             // Détection des NOUVELLES notifications pour Push Système
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added" && !initialLoad) {
@@ -1303,11 +1334,11 @@
         const OWNER_PASSWORD = 'FARAH2025+';
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
         let notifications = JSON.parse(localStorage.getItem('labNotifications')) || [];
-        
+
         // Selection Logic
         window.selectedAlerts = [];
-        
-        window.toggleSelectAlert = function(id) {
+
+        window.toggleSelectAlert = function (id) {
             const index = window.selectedAlerts.indexOf(id);
             if (index === -1) {
                 window.selectedAlerts.push(id);
@@ -1317,10 +1348,10 @@
             updateSelectionUI();
         };
 
-        window.toggleSelectAll = function() {
+        window.toggleSelectAll = function () {
             const displayedAlerts = getFilteredData();
             const allSelected = displayedAlerts.every(a => window.selectedAlerts.includes(a.id));
-            
+
             if (allSelected) {
                 // Deselect all displayed
                 displayedAlerts.forEach(a => {
@@ -1337,18 +1368,18 @@
             updateSelectionUI();
         };
 
-        window.updateSelectionUI = function() {
+        window.updateSelectionUI = function () {
             const floatingBar = document.getElementById('send-button-container');
             const selectAllBtn = document.getElementById('select-all-btn');
             const countBadge = document.getElementById('selected-count-badge');
-            
+
             if (window.selectedAlerts.length > 0) {
                 floatingBar.classList.remove('hidden');
                 countBadge.textContent = window.selectedAlerts.length;
             } else {
                 floatingBar.classList.add('hidden');
             }
-            
+
             const displayedAlerts = getFilteredData();
             if (displayedAlerts.length > 0) {
                 const allSelected = displayedAlerts.every(a => window.selectedAlerts.includes(a.id));
@@ -1359,55 +1390,62 @@
             }
         };
 
+        window.deselectAllAlerts = function () {
+            window.selectedAlerts = [];
+            window.renderFilteredAlerts();
+            window.updateSelectionUI();
+        };
+
         // Send Modal Logic
-        window.openSendModal = function() {
+        window.openSendModal = function () {
             // Load saved coordinates
             document.getElementById('send-phone').value = localStorage.getItem('lastManagerPhone') || '';
             document.getElementById('send-email').value = localStorage.getItem('lastManagerEmail') || '';
-            
+
             document.getElementById('send-modal').classList.remove('hidden');
             if (document.getElementById('send-modal-count')) {
                 document.getElementById('send-modal-count').textContent = window.selectedAlerts.length;
             }
         };
 
-        window.closeSendModal = function() {
+        window.closeSendModal = function () {
             document.getElementById('send-modal').classList.add('hidden');
         };
 
         async function generateSelectionPDF(selectedData) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
+
             // Header
             doc.setFontSize(22);
             doc.setTextColor(11, 15, 25);
             doc.text("RAPPORT DE SIGNALEMENT", 105, 20, { align: "center" });
-            
+
             doc.setFontSize(10);
             doc.setTextColor(100);
             doc.text(`Généré le: ${formatDate(new Date())}`, 105, 30, { align: "center" });
             doc.text(`Par: ${currentUser.firstName} ${currentUser.lastName}`, 105, 35, { align: "center" });
-            
+
             const tableData = selectedData.map(a => [
                 a.productName,
                 getTypeLabel(a.type),
                 a.reference || '-',
+                a.reportedTo || '-',
                 a.status === 'resolved' ? 'Résolu' : 'Signalé',
                 getUrgencyLabel(a.urgency),
                 a.notes || ''
             ]);
-            
+
             doc.autoTable({
                 startY: 45,
-                head: [['Produit', 'Type de Problème', 'Référence', 'Statut', 'Urgence', 'Remarques']],
+                head: [['Produit', 'Type de Problème', 'Référence', 'Destinataire', 'Statut', 'Urgence', 'Remarques']],
                 body: tableData,
                 headStyles: { fillColor: [6, 182, 212] },
                 alternateRowStyles: { fillColor: [245, 247, 250] },
                 margin: { top: 45 },
                 styles: { fontSize: 9 }
             });
-            
+
             const fileName = `Rapport_Signalement_${new Date().toISOString().split('T')[0]}.pdf`;
             doc.save(fileName);
         }
@@ -1415,7 +1453,7 @@
         async function markSelectedAsSent() {
             for (const id of window.selectedAlerts) {
                 try {
-                    await window.updateAlertInFirestore(id, { 
+                    await window.updateAlertInFirestore(id, {
                         sentToManager: true,
                         sentAt: new Date().toISOString(),
                         sentBy: {
@@ -1434,46 +1472,71 @@
             closeSendModal();
         }
 
-        window.sendViaWhatsApp = async function() {
+        window.deleteSelectedAlerts = async function () {
+            if (window.selectedAlerts.length === 0) return;
+            
+            const alertsToDelete = window.alerts.filter(a => window.selectedAlerts.includes(a.id) && (currentUser?.isOwner || currentUser?.id === a.reportedBy.id));
+            
+            if (alertsToDelete.length === 0) {
+                showToast('Vous n\'avez pas la permission de supprimer ces éléments.', true);
+                return;
+            }
+
+            if (confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${alertsToDelete.length} signalement(s) ?`)) {
+                try {
+                    for (const alert of alertsToDelete) {
+                        await window.deleteAlertFromFirestore(alert.id);
+                    }
+                    showToast(`${alertsToDelete.length} signalement(s) supprimé(s)`);
+                    window.deselectAllAlerts();
+                } catch (e) {
+                    showToast('Erreur lors de la suppression : ' + e.message, true);
+                    console.error(e);
+                }
+            }
+        };
+
+        window.sendViaWhatsApp = async function () {
             const phoneInput = document.getElementById('send-phone').value.trim();
             const phone = phoneInput.replace(/\D/g, '');
-            
+
             const selectedData = window.alerts.filter(a => window.selectedAlerts.includes(a.id));
             if (selectedData.length === 0) return;
 
             // 1. Better Text "Tableau" for WhatsApp
             let message = `*📦 ÉTAT DES PRODUITS SIGNALÉS*\n`;
             message += `*-----------------------------------*\n\n`;
-            
+
             selectedData.forEach((a, i) => {
-                message += `${i+1}. *${a.productName.toUpperCase()}*\n`;
+                message += `${i + 1}. *${a.productName.toUpperCase()}*\n`;
                 message += `   🔹 État: ${getTypeLabel(a.type)}\n`;
                 message += `   🚩 Urgence: ${getUrgencyLabel(a.urgency)}\n`;
                 if (a.reference) message += `   🆔 Réf: ${a.reference}\n`;
+                if (a.reportedTo) message += `   👤 Destinataire: ${a.reportedTo}\n`;
                 if (a.expirationDate) message += `   🗓️ Exp: ${a.expirationDate}\n`;
                 if (a.notes) message += `   📝 Note: ${a.notes}\n`;
                 message += `*-----------------------------------*\n`;
             });
-            
+
             message += `\n_Généré par: ${currentUser.firstName} ${currentUser.lastName}_`;
-            
+
             // 2. Open WhatsApp (With or without phone number)
             let whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-            
+
             if (phone) {
                 whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
                 localStorage.setItem('lastManagerPhone', phone);
             }
-            
+
             window.open(whatsappUrl, '_blank');
             markSelectedAsSent();
         };
 
-        window.sendViaEmail = async function() {
+        window.sendViaEmail = async function () {
             const email = document.getElementById('send-email').value;
             if (!email) { showToast("Veuillez entrer une adresse e-mail", true); return; }
             localStorage.setItem('lastManagerEmail', email);
-            
+
             const selectedData = window.alerts.filter(a => window.selectedAlerts.includes(a.id));
             if (selectedData.length === 0) return;
 
@@ -1481,17 +1544,18 @@
             const subject = `Rapport de signalement - ${selectedData.length} produits`;
             let body = `📦 ÉTAT DES PRODUITS SIGNALÉS\n`;
             body += `===================================\n\n`;
-            
+
             selectedData.forEach((a, i) => {
-                body += `${i+1}. ${a.productName.toUpperCase()}\n`;
+                body += `${i + 1}. ${a.productName.toUpperCase()}\n`;
                 body += `   - État: ${getTypeLabel(a.type)}\n`;
                 body += `   - Urgence: ${getUrgencyLabel(a.urgency)}\n`;
                 if (a.reference) body += `   - Réf: ${a.reference}\n`;
+                if (a.reportedTo) body += `   - Destinataire: ${a.reportedTo}\n`;
                 if (a.expirationDate) body += `   - Exp: ${a.expirationDate}\n`;
                 if (a.notes) body += `   - Notes: ${a.notes}\n`;
                 body += `-----------------------------------\n`;
             });
-            
+
             body += `\nCordialement,\n${currentUser.firstName} ${currentUser.lastName}`;
 
             window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -1591,17 +1655,17 @@
             container.innerHTML = items.map((item, i) => `
                 <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2" id="update-item-${i}">
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Nouveauté ${i+1}</span>
+                        <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Nouveauté ${i + 1}</span>
                         <button onclick="removeUpdateItem(${i})" class="text-red-400 hover:text-red-300 text-xs">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                     <div class="flex gap-2">
                         <select onchange="updateItemField(${i},'color',this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-xs text-gray-300 focus:outline-none">
-                            ${['cyan','violet','rose','teal','amber','indigo','yellow','orange','green','red'].map(c => `<option value="${c}" ${item.color===c?'selected':''}>${c}</option>`).join('')}
+                            ${['cyan', 'violet', 'rose', 'teal', 'amber', 'indigo', 'yellow', 'orange', 'green', 'red'].map(c => `<option value="${c}" ${item.color === c ? 'selected' : ''}>${c}</option>`).join('')}
                         </select>
                         <select onchange="updateItemField(${i},'icon',this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-xs text-gray-300 focus:outline-none flex-1">
-                            ${['paper-plane','rocket','shield-alt','eye','code','chart-bar','bell','star','wrench','lock','mouse-pointer','cloud','cogs','users','check-circle'].map(ic => `<option value="${ic}" ${item.icon===ic?'selected':''}>${ic}</option>`).join('')}
+                            ${['paper-plane', 'rocket', 'shield-alt', 'eye', 'code', 'chart-bar', 'bell', 'star', 'wrench', 'lock', 'mouse-pointer', 'cloud', 'cogs', 'users', 'check-circle'].map(ic => `<option value="${ic}" ${item.icon === ic ? 'selected' : ''}>${ic}</option>`).join('')}
                         </select>
                     </div>
                     <input type="text" value="${item.title}" onchange="updateItemField(${i},'title',this.value)" placeholder="Titre" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500">
@@ -1610,7 +1674,7 @@
             `).join('');
         }
 
-        window.openUpdatesModal = function() {
+        window.openUpdatesModal = function () {
             document.getElementById('updates-modal').classList.remove('hidden');
             document.getElementById('updates-view-mode').classList.remove('hidden');
             document.getElementById('updates-edit-mode').classList.add('hidden');
@@ -1620,47 +1684,47 @@
                 editBtn.classList.remove('hidden');
             }
         };
-        window.closeUpdatesModal = function() {
+        window.closeUpdatesModal = function () {
             document.getElementById('updates-modal').classList.add('hidden');
         };
-        window.showUpdatesEditor = function() {
+        window.showUpdatesEditor = function () {
             renderUpdatesEditor(currentUpdates);
             document.getElementById('updates-view-mode').classList.add('hidden');
             document.getElementById('updates-edit-mode').classList.remove('hidden');
         };
-        window.hideUpdatesEditor = function() {
+        window.hideUpdatesEditor = function () {
             document.getElementById('updates-edit-mode').classList.add('hidden');
             document.getElementById('updates-view-mode').classList.remove('hidden');
         };
-        window.updateItemField = function(index, field, value) {
+        window.updateItemField = function (index, field, value) {
             currentUpdates[index][field] = value;
         };
-        window.removeUpdateItem = function(index) {
+        window.removeUpdateItem = function (index) {
             currentUpdates.splice(index, 1);
             renderUpdatesEditor(currentUpdates);
         };
-        window.addUpdateItem = function() {
+        window.addUpdateItem = function () {
             currentUpdates.push({ icon: 'star', color: 'amber', title: 'Nouvelle fonctionnalité', desc: 'Description...' });
             renderUpdatesEditor(currentUpdates);
         };
-        window.saveUpdates = async function() {
+        window.saveUpdates = async function () {
             try {
                 await window.setFirebaseDoc(window.firebaseDoc(window.db, 'settings', 'updates'), { items: currentUpdates }, { merge: true });
                 renderUpdatesList(currentUpdates);
                 hideUpdatesEditor();
                 showToast('Nouveautés mises à jour !');
-            } catch(e) {
+            } catch (e) {
                 showToast('Erreur: ' + e.message, true);
             }
         };
 
         // Load updates from Firebase on startup
-        window.loadUpdatesFromFirebase = async function() {
+        window.loadUpdatesFromFirebase = async function () {
             try {
                 const snap = await window.getDocs(window.dbQuery(window.dbCollection(window.db, 'settings')));
                 const doc = snap.docs.find(d => d.id === 'updates');
                 currentUpdates = (doc && doc.data().items) ? doc.data().items : DEFAULT_UPDATES;
-            } catch(e) {
+            } catch (e) {
                 currentUpdates = DEFAULT_UPDATES;
             }
             renderUpdatesList(currentUpdates);
@@ -1814,6 +1878,7 @@
                                     </div>
                                     <p class="text-sm text-gray-400 flex items-center flex-wrap gap-2">
                                         <span><i class="fas fa-user-circle mr-1"></i>Signalé par : ${alert.reportedBy.firstName} ${alert.reportedBy.lastName}</span>
+                                        ${alert.reportedTo ? `<span class="text-amber-400"><i class="fas fa-hand-point-right mr-1"></i>Signalé à : ${alert.reportedTo}</span>` : ''}
                                         ${alert.reportedBy.role ? `<span class="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-300 border border-white/5 uppercase tracking-wider">${alert.reportedBy.role.replace('_', ' ')}</span>` : ''}
                                         <span class="text-gray-600">•</span>
                                         <span><i class="fas fa-clock mr-1"></i>${formatDate(alert.date)}</span>
@@ -1915,6 +1980,7 @@
                 Type: getTypeLabel(a.type),
                 Produit: a.productName,
                 Référence: a.reference || '-',
+                'Destinataire': a.reportedTo || '-',
                 'Péremption': a.expirationDate || '-',
                 Urgence: getUrgencyLabel(a.urgency),
                 'Signalé par': a.reportedBy.firstName + ' ' + a.reportedBy.lastName + (a.reportedBy.role ? ` (${a.reportedBy.role.replace('_', ' ')})` : ''),
@@ -2006,6 +2072,7 @@
             document.getElementById('edit-alert-id').value = id;
             document.getElementById('edit-product-name').value = alert.productName || '';
             document.getElementById('edit-reference').value = alert.reference || '';
+            const editRep = document.getElementById('edit-reported-to'); if (editRep) editRep.value = alert.reportedTo || '';
             document.getElementById('edit-expiration').value = alert.expirationDate || '';
             document.getElementById('edit-notes').value = alert.notes || '';
 
@@ -2042,6 +2109,7 @@
                 type: selectedTypes,
                 productName: formData.get('productName'),
                 reference: formData.get('reference') || '',
+                reportedTo: formData.get('reportedTo') || '',
                 expirationDate: formData.get('expirationDate') || '',
                 urgency: formData.get('urgency') || 'medium',
                 notes: formData.get('notes') || '',
@@ -2190,8 +2258,8 @@
             const productName = formData.get('productName');
 
             // --- Check for duplicate or already sent alert ---
-            const existing = window.alerts.find(a => 
-                a.productName.trim().toLowerCase() === productName.trim().toLowerCase() && 
+            const existing = window.alerts.find(a =>
+                a.productName.trim().toLowerCase() === productName.trim().toLowerCase() &&
                 a.status !== 'resolved'
             );
 
@@ -2203,7 +2271,7 @@
                     msg += `Il est actuellement en attente de traitement.\n\n`;
                 }
                 msg += `Voulez-vous quand même créer un nouveau signalement ?`;
-                
+
                 if (!confirm(msg)) return;
             }
             // -----------------------------------------
@@ -2212,6 +2280,7 @@
                 type: selectedTypes,
                 productName: productName,
                 reference: formData.get('reference') || '',
+                reportedTo: formData.get('reportedTo') || '',
                 expirationDate: formData.get('expirationDate') || '',
                 urgency: formData.get('urgency') || 'medium',
                 status: 'pending',
@@ -2494,7 +2563,7 @@
         };
 
         // Logic for Browser System Notifications
-        window.requestNotificationPermission = async function() {
+        window.requestNotificationPermission = async function () {
             if (!("Notification" in window)) {
                 showToast("Votre navigateur ne supporte pas les notifications.", true);
                 return;
@@ -2508,7 +2577,7 @@
             }
         };
 
-        window.sendSystemPush = function(title, message) {
+        window.sendSystemPush = function (title, message) {
             if (Notification.permission === "granted") {
                 const options = {
                     body: message,
