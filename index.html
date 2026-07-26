@@ -880,8 +880,8 @@
                     <datalist id="destinataries-list"></datalist>
                     
                     <div>
-                        <label class="block text-sm mb-1 text-gray-400">Date du signalement</label>
-                        <input type="date" id="alert-date" name="alertDate" required
+                        <label class="block text-sm mb-1 text-gray-400">Date et heure du signalement</label>
+                        <input type="datetime-local" id="alert-date" name="alertDate" required
                             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:border-cyan-500">
                     </div>
 
@@ -1069,8 +1069,8 @@
                         class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500" autocomplete="off">
 
                     <div>
-                        <label class="block text-sm mb-1 text-gray-400">Date du signalement</label>
-                        <input type="date" id="edit-date" name="alertDate" required
+                        <label class="block text-sm mb-1 text-gray-400">Date et heure du signalement</label>
+                        <input type="datetime-local" id="edit-date" name="alertDate" required
                             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:border-cyan-500">
                     </div>
 
@@ -2130,7 +2130,15 @@
             document.getElementById('edit-expiration').value = alert.expirationDate || '';
             document.getElementById('edit-notes').value = alert.notes || '';
             const eDate = document.getElementById('edit-date');
-            if (eDate) eDate.value = alert.date ? alert.date.split('T')[0] : '';
+            if (eDate) {
+                if (alert.date) {
+                    const localDate = new Date(alert.date);
+                    localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+                    eDate.value = localDate.toISOString().slice(0, 16);
+                } else {
+                    eDate.value = '';
+                }
+            }
             
             // Set types
             ['missing', 'outofstock', 'expired', 'damaged', 'other'].forEach(t => {
@@ -2171,10 +2179,7 @@
             let updatedDate = existingAlert.date;
             const alertDateInput = formData.get('alertDate');
             if (alertDateInput) {
-                const oldDate = new Date(existingAlert.date || new Date());
-                const [year, month, day] = alertDateInput.split('-');
-                oldDate.setFullYear(year, month - 1, day);
-                updatedDate = oldDate.toISOString();
+                updatedDate = new Date(alertDateInput).toISOString();
             }
 
             const updates = {
@@ -2313,7 +2318,9 @@
         // Alertes
         window.openAlertModal = function () { 
             if (window.loadChoices) window.loadChoices();
-            document.getElementById('alert-date').value = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('alert-date').value = now.toISOString().slice(0, 16);
             document.getElementById('alert-modal').classList.remove('hidden'); 
         };
         window.closeAlertModal = function () {
@@ -2360,10 +2367,7 @@
             const alertDateInput = formData.get('alertDate');
             let alertDateToSave = new Date().toISOString();
             if (alertDateInput) {
-                const today = new Date();
-                const [year, month, day] = alertDateInput.split('-');
-                today.setFullYear(year, month - 1, day);
-                alertDateToSave = today.toISOString();
+                alertDateToSave = new Date(alertDateInput).toISOString();
             }
 
             const newAlert = {
